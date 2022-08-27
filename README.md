@@ -6,10 +6,10 @@ EchoNet-Dynamic is a end-to-end beat-to-beat deep learning model for
   2) prediction of ejection fraction by entire video or subsampled clips, and
   3) assessment of cardiomyopathy with reduced ejection fraction.
 
-For more details, see the acompanying paper,
+For more details, see the accompanying paper,
 
-> [**Interpretable AI for beat-to-beat cardiac function assessment**](https://www.medrxiv.org/content/10.1101/19012419v2)<br/>
-  by David Ouyang, Bryan He, Amirata Ghorbani, Curt P. Langlotz, Paul A. Heidenreich, Robert A. Harrington, David H. Liang, Euan A. Ashley, and James Y. Zou
+> [**Video-based AI for beat-to-beat assessment of cardiac function**](https://www.nature.com/articles/s41586-020-2145-8)<br/>
+  David Ouyang, Bryan He, Amirata Ghorbani, Neal Yuan, Joseph Ebinger, Curt P. Langlotz, Paul A. Heidenreich, Robert A. Harrington, David H. Liang, Euan A. Ashley, and James Y. Zou. <b>Nature</b>, March 25, 2020. https://doi.org/10.1038/s41586-020-2145-8
 
 Dataset
 -------
@@ -69,10 +69,7 @@ We describe our full hyperparameter sweep in the next section.
 
 #### Frame-by-frame Semantic Segmentation of the Left Ventricle
 
-    cmd="import echonet; echonet.utils.segmentation.run(modelname=\"deeplabv3_resnet50\",
-                                                        save_segmentation=True,
-                                                        pretrained=False)"
-    python3 -c "${cmd}"
+    echonet segmentation --save_video
 
 This creates a directory named `output/segmentation/deeplabv3_resnet50_random/`, which will contain
   - log.csv: training and validation losses
@@ -82,12 +79,7 @@ This creates a directory named `output/segmentation/deeplabv3_resnet50_random/`,
 
 #### Prediction of Ejection Fraction from Subsampled Clips
 
-    cmd="import echonet; echonet.utils.video.run(modelname=\"r2plus1d_18\",
-                                                 frames=32,
-                                                 period=2,
-                                                 pretrained=True,
-                                                 batch_size=8)"
-    python3 -c "${cmd}"
+  echonet video
 
 This creates a directory named `output/video/r2plus1d_18_32_2_pretrained/`, which will contain
   - log.csv: training and validation losses
