@@ -114,6 +114,7 @@ def run(
     model = torchvision.models.segmentation.__dict__[model_name](pretrained=pretrained, aux_loss=False)
 
     model.classifier[-1] = torch.nn.Conv2d(model.classifier[-1].in_channels, 1, kernel_size=model.classifier[-1].kernel_size)  # change number of outputs to 1
+    print(device)
     if device.type == "cuda":
         model = torch.nn.DataParallel(model)
     model.to(device)

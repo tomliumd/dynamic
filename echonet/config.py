@@ -19,6 +19,6 @@ for filename in ["echonet.cfg",
             _PARAM = config["config"]
         break
 
-CONFIG = types.SimpleNamespace(
+config = types.SimpleNamespace(
     FILENAME=_FILENAME,
-    DATA_DIR=_PARAM.get("data_dir", "a4c-video-dir/"))
+    DATA_DIR=_PARAM.get("data_dir", "/data/tom/MESA_Echos/alla4c/"))
