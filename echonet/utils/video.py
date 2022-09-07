@@ -41,6 +41,7 @@ def run(
     data_dir=None,
     output=None,
     task="EF",
+    cohort_split="external_test",
 
     model_name="r2plus1d_18",
     pretrained=True,
@@ -138,7 +139,7 @@ def run(
     scheduler = torch.optim.lr_scheduler.StepLR(optim, lr_step_period)
 
     # Compute mean and std
-    mean, std = echonet.utils.get_mean_and_std(echonet.datasets.Echo(root=data_dir, split="train"))
+    mean, std = echonet.utils.get_mean_and_std(echonet.datasets.Echo(root=data_dir, split=cohort_split))
     kwargs = {"target_type": task,
               "mean": mean,
               "std": std,
@@ -148,79 +149,87 @@ def run(
 
     # Set up datasets and dataloaders
     dataset = {}
-    dataset["train"] = echonet.datasets.Echo(root=data_dir, split="train", **kwargs, pad=12)
-    if num_train_patients is not None and len(dataset["train"]) > num_train_patients:
-        # Subsample patients (used for ablation experiment)
-        indices = np.random.choice(len(dataset["train"]), num_train_patients, replace=False)
-        dataset["train"] = torch.utils.data.Subset(dataset["train"], indices)
-    dataset["val"] = echonet.datasets.Echo(root=data_dir, split="val", **kwargs)
+    if cohort_split == "external_test":
+        dataset[cohort_split] = echonet.datasets.Echo(root=data_dir, split=cohort_split, **kwargs, pad=12)
+    else:
+        dataset["train"] = echonet.datasets.Echo(root=data_dir, split="train", **kwargs, pad=12)
+        if num_train_patients is not None and len(dataset["train"]) > num_train_patients:
+            # Subsample patients (used for ablation experiment)
+            indices = np.random.choice(len(dataset["train"]), num_train_patients, replace=False)
+            dataset["train"] = torch.utils.data.Subset(dataset["train"], indices)
+        dataset["val"] = echonet.datasets.Echo(root=data_dir, split="val", **kwargs)
 
     # Run training and testing loops
-    with open(os.path.join(output, "log.csv"), "a") as f:
-        epoch_resume = 0
-        bestLoss = float("inf")
-        try:
-            # Attempt to load checkpoint
-            checkpoint = torch.load(os.path.join(output, "checkpoint.pt"))
-            model.load_state_dict(checkpoint['state_dict'])
-            optim.load_state_dict(checkpoint['opt_dict'])
-            scheduler.load_state_dict(checkpoint['scheduler_dict'])
-            epoch_resume = checkpoint["epoch"] + 1
-            bestLoss = checkpoint["best_loss"]
-            f.write("Resuming from epoch {}\n".format(epoch_resume))
-        except FileNotFoundError:
-            f.write("Starting run from scratch\n")
+    if cohort_split != "external_test":
+        with open(os.path.join(output, "log.csv"), "a") as f:
+            epoch_resume = 0
+            bestLoss = float("inf")
+            try:
+                # Attempt to load checkpoint
+                checkpoint = torch.load(os.path.join(output, "checkpoint.pt"))
+                model.load_state_dict(checkpoint['state_dict'])
+                optim.load_state_dict(checkpoint['opt_dict'])
+                scheduler.load_state_dict(checkpoint['scheduler_dict'])
+                epoch_resume = checkpoint["epoch"] + 1
+                bestLoss = checkpoint["best_loss"]
+                f.write("Resuming from epoch {}\n".format(epoch_resume))
+            except FileNotFoundError:
+                f.write("Starting run from scratch\n")
 
-        for epoch in range(epoch_resume, num_epochs):
-            print("Epoch #{}".format(epoch), flush=True)
-            for phase in ['train', 'val']:
-                start_time = time.time()
-                for i in range(torch.cuda.device_count()):
-                    torch.cuda.reset_peak_memory_stats(i)
+            for epoch in range(epoch_resume, num_epochs):
+                print("Epoch #{}".format(epoch), flush=True)
+                for phase in ['train', 'val']:
+                    start_time = time.time()
+                    for i in range(torch.cuda.device_count()):
+                        torch.cuda.reset_peak_memory_stats(i)
 
-                ds = dataset[phase]
-                dataloader = torch.utils.data.DataLoader(
-                    ds, batch_size=batch_size, num_workers=num_workers, shuffle=True, pin_memory=(device.type == "cuda"), drop_last=(phase == "train"))
+                    ds = dataset[phase]
+                    dataloader = torch.utils.data.DataLoader(
+                        ds, batch_size=batch_size, num_workers=num_workers, shuffle=True, pin_memory=(device.type == "cuda"), drop_last=(phase == "train"))
 
-                loss, yhat, y = echonet.utils.video.run_epoch(model, dataloader, phase == "train", optim, device)
-                f.write("{},{},{},{},{},{},{},{},{}\n".format(epoch,
-                                                              phase,
-                                                              loss,
-                                                              sklearn.metrics.r2_score(y, yhat),
-                                                              time.time() - start_time,
-                                                              y.size,
-                                                              sum(torch.cuda.max_memory_allocated() for i in range(torch.cuda.device_count())),
-                                                              sum(torch.cuda.max_memory_reserved() for i in range(torch.cuda.device_count())),
-                                                              batch_size))
+                    loss, yhat, y = echonet.utils.video.run_epoch(model, dataloader, phase == "train", optim, device)
+                    f.write("{},{},{},{},{},{},{},{},{}\n".format(epoch,
+                                                                  phase,
+                                                                  loss,
+                                                                  sklearn.metrics.r2_score(y, yhat),
+                                                                  time.time() - start_time,
+                                                                  y.size,
+                                                                  sum(torch.cuda.max_memory_allocated() for i in range(torch.cuda.device_count())),
+                                                                  sum(torch.cuda.max_memory_reserved() for i in range(torch.cuda.device_count())),
+                                                                  batch_size))
+                    f.flush()
+                scheduler.step()
+
+                # Save checkpoint
+                save = {
+                    'epoch': epoch,
+                    'state_dict': model.state_dict(),
+                    'period': period,
+                    'frames': frames,
+                    'best_loss': bestLoss,
+                    'loss': loss,
+                    'r2': sklearn.metrics.r2_score(y, yhat),
+                    'opt_dict': optim.state_dict(),
+                    'scheduler_dict': scheduler.state_dict(),
+                }
+                torch.save(save, os.path.join(output, "checkpoint.pt"))
+                if loss < bestLoss:
+                    torch.save(save, os.path.join(output, "best.pt"))
+                    bestLoss = loss
+
+            # Load best weights
+            if num_epochs != 0:
+                checkpoint = torch.load(os.path.join(output, "best.pt"))
+                model.load_state_dict(checkpoint['state_dict'])
+                f.write("Best validation loss {} from epoch {}\n".format(checkpoint["loss"], checkpoint["epoch"]))
                 f.flush()
-            scheduler.step()
-
-            # Save checkpoint
-            save = {
-                'epoch': epoch,
-                'state_dict': model.state_dict(),
-                'period': period,
-                'frames': frames,
-                'best_loss': bestLoss,
-                'loss': loss,
-                'r2': sklearn.metrics.r2_score(y, yhat),
-                'opt_dict': optim.state_dict(),
-                'scheduler_dict': scheduler.state_dict(),
-            }
-            torch.save(save, os.path.join(output, "checkpoint.pt"))
-            if loss < bestLoss:
-                torch.save(save, os.path.join(output, "best.pt"))
-                bestLoss = loss
-
-        # Load best weights
-        if num_epochs != 0:
-            checkpoint = torch.load(os.path.join(output, "best.pt"))
-            model.load_state_dict(checkpoint['state_dict'])
-            f.write("Best validation loss {} from epoch {}\n".format(checkpoint["loss"], checkpoint["epoch"]))
-            f.flush()
 
         if run_test:
-            for split in ["val", "test"]:
+            if cohort_split == "external_test":
+                split = ["external_test"]
+            else:
+                split = ["val", "test"]
+            for split in split:
                 # Performance without test-time augmentation
                 dataloader = torch.utils.data.DataLoader(
                     echonet.datasets.Echo(root=data_dir, split=split, **kwargs),
