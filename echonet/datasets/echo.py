@@ -91,7 +91,7 @@ class Echo(torchvision.datasets.VisionDataset):
 
         self.fnames, self.outcome = [], []
 
-        if self.split == "EXTERNAL_TEST":
+        if self.split == "EXTERNAL_TEST" or self.split == "external_test":
             self.fnames = sorted(os.listdir(self.external_test_location))
         else:
             # Load video-level labels

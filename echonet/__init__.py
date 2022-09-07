@@ -19,7 +19,6 @@ def main():
 
 del click
 
-
 main.add_command(utils.segmentation.run)
 main.add_command(utils.video.run)
 

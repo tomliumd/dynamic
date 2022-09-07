@@ -8,6 +8,11 @@ import matplotlib
 import numpy as np
 import torch
 import tqdm
+import cv2
+import numpy as np
+import os
+import matplotlib
+matplotlib.use('agg')
 
 from . import video
 from . import segmentation
@@ -36,6 +41,7 @@ def loadvideo(filename: str) -> np.ndarray:
     frame_width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
+    # empty numpy array of appropriate length, fill in when possible from front
     v = np.zeros((frame_count, frame_height, frame_width, 3), np.uint8)
 
     for count in range(frame_count):
@@ -148,6 +154,7 @@ def bootstrap(a, b, func, samples=10000):
     return func(a, b), bootstraps[round(0.05 * len(bootstraps))], bootstraps[round(0.95 * len(bootstraps))]
 
 
+# Based on https://nipunbatra.github.io/blog/2014/latexify.html
 def latexify():
     """Sets matplotlib params to appear more like LaTeX.
 

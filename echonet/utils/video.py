@@ -41,6 +41,7 @@ def run(
     data_dir=None,
     output=None,
     task="EF",
+    cohort_split="external_test",
 
     model_name="r2plus1d_18",
     pretrained=True,
@@ -117,6 +118,7 @@ def run(
     # Set device for computations
     if device is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    pathlib.Path(output).mkdir(parents=True, exist_ok=True)
 
     # Set up model
     model = torchvision.models.video.__dict__[model_name](pretrained=pretrained)
@@ -138,7 +140,7 @@ def run(
     scheduler = torch.optim.lr_scheduler.StepLR(optim, lr_step_period)
 
     # Compute mean and std
-    mean, std = echonet.utils.get_mean_and_std(echonet.datasets.Echo(root=data_dir, split="train"))
+    mean, std = echonet.utils.get_mean_and_std(echonet.datasets.Echo(root=data_dir, split=cohort_split))
     kwargs = {"target_type": task,
               "mean": mean,
               "std": std,
@@ -148,79 +150,128 @@ def run(
 
     # Set up datasets and dataloaders
     dataset = {}
-    dataset["train"] = echonet.datasets.Echo(root=data_dir, split="train", **kwargs, pad=12)
-    if num_train_patients is not None and len(dataset["train"]) > num_train_patients:
-        # Subsample patients (used for ablation experiment)
-        indices = np.random.choice(len(dataset["train"]), num_train_patients, replace=False)
-        dataset["train"] = torch.utils.data.Subset(dataset["train"], indices)
-    dataset["val"] = echonet.datasets.Echo(root=data_dir, split="val", **kwargs)
+    if cohort_split == "external_test":
+        dataset[cohort_split] = echonet.datasets.Echo(root=data_dir, split=cohort_split, **kwargs, pad=12)
+    else:
+        dataset["train"] = echonet.datasets.Echo(root=data_dir, split="train", **kwargs, pad=12)
+        if num_train_patients is not None and len(dataset["train"]) > num_train_patients:
+            # Subsample patients (used for ablation experiment)
+            indices = np.random.choice(len(dataset["train"]), num_train_patients, replace=False)
+            dataset["train"] = torch.utils.data.Subset(dataset["train"], indices)
+        dataset["val"] = echonet.datasets.Echo(root=data_dir, split="val", **kwargs)
 
     # Run training and testing loops
-    with open(os.path.join(output, "log.csv"), "a") as f:
-        epoch_resume = 0
-        bestLoss = float("inf")
-        try:
-            # Attempt to load checkpoint
-            checkpoint = torch.load(os.path.join(output, "checkpoint.pt"))
-            model.load_state_dict(checkpoint['state_dict'])
-            optim.load_state_dict(checkpoint['opt_dict'])
-            scheduler.load_state_dict(checkpoint['scheduler_dict'])
-            epoch_resume = checkpoint["epoch"] + 1
-            bestLoss = checkpoint["best_loss"]
-            f.write("Resuming from epoch {}\n".format(epoch_resume))
-        except FileNotFoundError:
-            f.write("Starting run from scratch\n")
+    if cohort_split != "external_test":
+        with open(os.path.join(output, "log.csv"), "a") as f:
+            epoch_resume = 0
+            bestLoss = float("inf")
+            try:
+                # Attempt to load checkpoint
+                checkpoint = torch.load(os.path.join(output, "checkpoint.pt"))
+                model.load_state_dict(checkpoint['state_dict'])
+                optim.load_state_dict(checkpoint['opt_dict'])
+                scheduler.load_state_dict(checkpoint['scheduler_dict'])
+                epoch_resume = checkpoint["epoch"] + 1
+                bestLoss = checkpoint["best_loss"]
+                f.write("Resuming from epoch {}\n".format(epoch_resume))
+            except FileNotFoundError:
+                f.write("Starting run from scratch\n")
 
-        for epoch in range(epoch_resume, num_epochs):
-            print("Epoch #{}".format(epoch), flush=True)
-            for phase in ['train', 'val']:
-                start_time = time.time()
-                for i in range(torch.cuda.device_count()):
-                    torch.cuda.reset_peak_memory_stats(i)
+            for epoch in range(epoch_resume, num_epochs):
+                print("Epoch #{}".format(epoch), flush=True)
+                for phase in ['train', 'val']:
+                    start_time = time.time()
+                    for i in range(torch.cuda.device_count()):
+                        torch.cuda.reset_peak_memory_stats(i)
 
-                ds = dataset[phase]
-                dataloader = torch.utils.data.DataLoader(
-                    ds, batch_size=batch_size, num_workers=num_workers, shuffle=True, pin_memory=(device.type == "cuda"), drop_last=(phase == "train"))
+                    ds = dataset[phase]
+                    dataloader = torch.utils.data.DataLoader(
+                        ds, batch_size=batch_size, num_workers=num_workers, shuffle=True, pin_memory=(device.type == "cuda"), drop_last=(phase == "train"))
 
-                loss, yhat, y = echonet.utils.video.run_epoch(model, dataloader, phase == "train", optim, device)
-                f.write("{},{},{},{},{},{},{},{},{}\n".format(epoch,
-                                                              phase,
-                                                              loss,
-                                                              sklearn.metrics.r2_score(y, yhat),
-                                                              time.time() - start_time,
-                                                              y.size,
-                                                              sum(torch.cuda.max_memory_allocated() for i in range(torch.cuda.device_count())),
-                                                              sum(torch.cuda.max_memory_reserved() for i in range(torch.cuda.device_count())),
-                                                              batch_size))
+                    loss, yhat, y = echonet.utils.video.run_epoch(model, dataloader, phase == "train", optim, device)
+                    f.write("{},{},{},{},{},{},{},{},{}\n".format(epoch,
+                                                                  phase,
+                                                                  loss,
+                                                                  sklearn.metrics.r2_score(y, yhat),
+                                                                  time.time() - start_time,
+                                                                  y.size,
+                                                                  sum(torch.cuda.max_memory_allocated() for i in range(torch.cuda.device_count())),
+                                                                  sum(torch.cuda.max_memory_reserved() for i in range(torch.cuda.device_count())),
+                                                                  batch_size))
+                    f.flush()
+                scheduler.step()
+
+                # Save checkpoint
+                save = {
+                    'epoch': epoch,
+                    'state_dict': model.state_dict(),
+                    'period': period,
+                    'frames': frames,
+                    'best_loss': bestLoss,
+                    'loss': loss,
+                    'r2': sklearn.metrics.r2_score(y, yhat),
+                    'opt_dict': optim.state_dict(),
+                    'scheduler_dict': scheduler.state_dict(),
+                }
+                torch.save(save, os.path.join(output, "checkpoint.pt"))
+                if loss < bestLoss:
+                    torch.save(save, os.path.join(output, "best.pt"))
+                    bestLoss = loss
+
+            # Load best weights
+            if num_epochs != 0:
+                checkpoint = torch.load(os.path.join(output, "best.pt"))
+                model.load_state_dict(checkpoint['state_dict'])
+                f.write("Best validation loss {} from epoch {}\n".format(checkpoint["loss"], checkpoint["epoch"]))
                 f.flush()
-            scheduler.step()
 
-            # Save checkpoint
-            save = {
-                'epoch': epoch,
-                'state_dict': model.state_dict(),
-                'period': period,
-                'frames': frames,
-                'best_loss': bestLoss,
-                'loss': loss,
-                'r2': sklearn.metrics.r2_score(y, yhat),
-                'opt_dict': optim.state_dict(),
-                'scheduler_dict': scheduler.state_dict(),
-            }
-            torch.save(save, os.path.join(output, "checkpoint.pt"))
-            if loss < bestLoss:
-                torch.save(save, os.path.join(output, "best.pt"))
-                bestLoss = loss
+        if run_extra_tests:
+            ds = echonet.datasets.Echo(split="nsc", **kwargs, crops="all")
+            test_dataloader = torch.utils.data.DataLoader(
+                ds, batch_size=1, num_workers=num_workers, shuffle=True, pin_memory=(device.type == "cuda"))
+            loss, yhat, y = echonet.utils.video.run_epoch(model, test_dataloader, "test", None, device, save_all=True, blocks=100)
 
-        # Load best weights
-        if num_epochs != 0:
-            checkpoint = torch.load(os.path.join(output, "best.pt"))
-            model.load_state_dict(checkpoint['state_dict'])
-            f.write("Best validation loss {} from epoch {}\n".format(checkpoint["loss"], checkpoint["epoch"]))
-            f.flush()
+            with open(os.path.join(output, "nsc_predictions.csv"), "w") as g:
+                for (filename, pred) in zip(ds.fnames, yhat):
+                    for (i, p) in enumerate(pred):
+                        g.write("{},{},{:.4f}\n".format(filename, i, p))
+
+            ds = echonet.datasets.Echo(split="clinical_test", **kwargs, crops="all")
+            test_dataloader = torch.utils.data.DataLoader(
+                ds, batch_size=1, num_workers=num_workers, shuffle=True, pin_memory=(device.type == "cuda"))
+            loss, yhat, y = echonet.utils.video.run_epoch(model, test_dataloader, "test", None, device, save_all=True, blocks=100)
+
+            with open(os.path.join(output, "clinical_test_predictions.csv"), "w") as g:
+                for (filename, pred) in zip(ds.fnames, yhat):
+                    for (i, p) in enumerate(pred):
+                        g.write("{},{},{:.4f}\n".format(filename, i, p))
+
+            ds = echonet.datasets.Echo(split="full", **kwargs, crops="all")
+            pathlib.Path(os.path.join(output, "full")).mkdir(parents=True, exist_ok=True)
+            for (block, start) in enumerate(range(0, len(ds), 1000)):
+                print("Block #{}".format(block), flush=True)
+                if not os.path.isfile(os.path.join(output, "full", "full_predictions_{}.csv".format(block))):
+                    test_dataloader = torch.utils.data.DataLoader(
+                        torch.utils.data.Subset(ds, range(start, min(start + 1000, len(ds)))),
+                        batch_size=1, num_workers=num_workers, shuffle=False, pin_memory=(device.type == "cuda"))
+                    loss, yhat, y = echonet.utils.video.run_epoch(model, test_dataloader, "test", None, device, save_all=True, blocks=100)
+
+                    with open(os.path.join(output, "full", "full_predictions_{}.csv".format(block)), "w") as g:
+                        for (filename, pred) in zip(ds.fnames, yhat):
+                            for (i, p) in enumerate(pred):
+                                g.write("{},{},{:.4f}\n".format(filename, i, p))
+            with open(os.path.join(output, "full_predictions.csv"), "w") as g:
+                for (block, start) in enumerate(range(0, len(ds), 1000)):
+                    with open(os.path.join(output, "full", "full_predictions_{}.csv".format(block)), "r") as h:
+                        for l in h:
+                            g.write(l)
 
         if run_test:
-            for split in ["val", "test"]:
+            if cohort_split == "external_test":
+                split = ["external_test"]
+            else:
+                split = ["val", "test"]
+            for split in split:
                 # Performance without test-time augmentation
                 dataloader = torch.utils.data.DataLoader(
                     echonet.datasets.Echo(root=data_dir, split=split, **kwargs),
@@ -262,6 +313,7 @@ def run(
                 plt.xticks([10, 20, 30, 40, 50, 60, 70, 80])
                 plt.yticks([10, 20, 30, 40, 50, 60, 70, 80])
                 plt.grid(color="gainsboro", linestyle="--", linewidth=1, zorder=1)
+                # plt.gca().set_axisbelow(True)
                 plt.tight_layout()
                 plt.savefig(os.path.join(output, "{}_scatter.pdf".format(split)))
                 plt.close(fig)
@@ -313,7 +365,7 @@ def run_epoch(model, dataloader, train, optim, device, save_all=False, block_siz
 
     with torch.set_grad_enabled(train):
         with tqdm.tqdm(total=len(dataloader)) as pbar:
-            for (X, outcome) in dataloader:
+            for (i, (X, outcome)) in enumerate(dataloader):
 
                 y.append(outcome.numpy())
                 X = X.to(device)

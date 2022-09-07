@@ -5,5 +5,4 @@ echonet.cfg
 .echonet.cfg
 *.pyc
 echonet.egg-info/
-/.idea
 .DS_Store
