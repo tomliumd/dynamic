@@ -166,8 +166,9 @@ def run(
         dataset["val"] = echonet.datasets.Echo(root=data_dir, split="val", **kwargs)
 
     # Run training and testing loops
-    if cohort_split != "external_test":
-        with open(os.path.join(output, "log.csv"), "a") as f:
+
+    with open(os.path.join(output, "log.csv"), "a") as f:
+        if cohort_split != "external_test":
             epoch_resume = 0
             bestLoss = float("inf")
             try:
