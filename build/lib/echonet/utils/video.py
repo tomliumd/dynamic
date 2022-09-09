@@ -151,7 +151,7 @@ def run(
               }
 
     if cohort_split == "external_test":
-        kwargs['external_test_location'] = cohort_split
+        kwargs['external_test_location'] = data_dir
 
     # Set up datasets and dataloaders
     dataset = {}
