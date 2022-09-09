@@ -150,6 +150,9 @@ def run(
               "period": period,
               }
 
+    if cohort_split == "external_test"
+        kwargs['external_test_location'] = cohort_split
+
     # Set up datasets and dataloaders
     dataset = {}
     if cohort_split == "external_test":
@@ -275,9 +278,9 @@ def run(
         else:
             split = ["val", "test"]
         for split in split:
-            print('Performance without test-time augmentation')
+            print('Performance without test-time augmentation: ', )
             dataloader = torch.utils.data.DataLoader(
-                echonet.datasets.Echo(root=data_dir, split=split, **kwargs),
+                echonet.datasets.Echo(root=data_dir, split=split, **kwargs, ),
                 batch_size=batch_size, num_workers=num_workers, shuffle=True, pin_memory=(device.type == "cuda"))
             loss, yhat, y = echonet.utils.video.run_epoch(model, dataloader, False, None, device)
             f.write("{} (one clip) R2:   {:.3f} ({:.3f} - {:.3f})\n".format(split, *echonet.utils.bootstrap(y, yhat, sklearn.metrics.r2_score)))
