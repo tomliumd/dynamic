@@ -150,7 +150,7 @@ def run(
               "period": period,
               }
 
-    if cohort_split == "external_test"
+    if cohort_split == "external_test":
         kwargs['external_test_location'] = cohort_split
 
     # Set up datasets and dataloaders
