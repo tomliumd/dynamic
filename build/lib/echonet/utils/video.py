@@ -231,114 +231,114 @@ def run(
                 f.write("Best validation loss {} from epoch {}\n".format(checkpoint["loss"], checkpoint["epoch"]))
                 f.flush()
 
-        if run_extra_tests:
-            ds = echonet.datasets.Echo(split="nsc", **kwargs, crops="all")
-            test_dataloader = torch.utils.data.DataLoader(
-                ds, batch_size=1, num_workers=num_workers, shuffle=True, pin_memory=(device.type == "cuda"))
-            loss, yhat, y = echonet.utils.video.run_epoch(model, test_dataloader, "test", None, device, save_all=True, blocks=100)
+            if run_extra_tests:
+                ds = echonet.datasets.Echo(split="nsc", **kwargs, crops="all")
+                test_dataloader = torch.utils.data.DataLoader(
+                    ds, batch_size=1, num_workers=num_workers, shuffle=True, pin_memory=(device.type == "cuda"))
+                loss, yhat, y = echonet.utils.video.run_epoch(model, test_dataloader, "test", None, device, save_all=True, blocks=100)
 
-            with open(os.path.join(output, "nsc_predictions.csv"), "w") as g:
-                for (filename, pred) in zip(ds.fnames, yhat):
-                    for (i, p) in enumerate(pred):
-                        g.write("{},{},{:.4f}\n".format(filename, i, p))
+                with open(os.path.join(output, "nsc_predictions.csv"), "w") as g:
+                    for (filename, pred) in zip(ds.fnames, yhat):
+                        for (i, p) in enumerate(pred):
+                            g.write("{},{},{:.4f}\n".format(filename, i, p))
 
-            ds = echonet.datasets.Echo(split="clinical_test", **kwargs, crops="all")
-            test_dataloader = torch.utils.data.DataLoader(
-                ds, batch_size=1, num_workers=num_workers, shuffle=True, pin_memory=(device.type == "cuda"))
-            loss, yhat, y = echonet.utils.video.run_epoch(model, test_dataloader, "test", None, device, save_all=True, blocks=100)
+                ds = echonet.datasets.Echo(split="clinical_test", **kwargs, crops="all")
+                test_dataloader = torch.utils.data.DataLoader(
+                    ds, batch_size=1, num_workers=num_workers, shuffle=True, pin_memory=(device.type == "cuda"))
+                loss, yhat, y = echonet.utils.video.run_epoch(model, test_dataloader, "test", None, device, save_all=True, blocks=100)
 
-            with open(os.path.join(output, "clinical_test_predictions.csv"), "w") as g:
-                for (filename, pred) in zip(ds.fnames, yhat):
-                    for (i, p) in enumerate(pred):
-                        g.write("{},{},{:.4f}\n".format(filename, i, p))
+                with open(os.path.join(output, "clinical_test_predictions.csv"), "w") as g:
+                    for (filename, pred) in zip(ds.fnames, yhat):
+                        for (i, p) in enumerate(pred):
+                            g.write("{},{},{:.4f}\n".format(filename, i, p))
 
-            ds = echonet.datasets.Echo(split="full", **kwargs, crops="all")
-            pathlib.Path(os.path.join(output, "full")).mkdir(parents=True, exist_ok=True)
-            for (block, start) in enumerate(range(0, len(ds), 1000)):
-                print("Block #{}".format(block), flush=True)
-                if not os.path.isfile(os.path.join(output, "full", "full_predictions_{}.csv".format(block))):
-                    test_dataloader = torch.utils.data.DataLoader(
-                        torch.utils.data.Subset(ds, range(start, min(start + 1000, len(ds)))),
-                        batch_size=1, num_workers=num_workers, shuffle=False, pin_memory=(device.type == "cuda"))
-                    loss, yhat, y = echonet.utils.video.run_epoch(model, test_dataloader, "test", None, device, save_all=True, blocks=100)
-
-                    with open(os.path.join(output, "full", "full_predictions_{}.csv".format(block)), "w") as g:
-                        for (filename, pred) in zip(ds.fnames, yhat):
-                            for (i, p) in enumerate(pred):
-                                g.write("{},{},{:.4f}\n".format(filename, i, p))
-            with open(os.path.join(output, "full_predictions.csv"), "w") as g:
+                ds = echonet.datasets.Echo(split="full", **kwargs, crops="all")
+                pathlib.Path(os.path.join(output, "full")).mkdir(parents=True, exist_ok=True)
                 for (block, start) in enumerate(range(0, len(ds), 1000)):
-                    with open(os.path.join(output, "full", "full_predictions_{}.csv".format(block)), "r") as h:
-                        for l in h:
-                            g.write(l)
-    if run_test is False:
-        print('run_test is False')
-    if run_test:
-        if cohort_split == "external_test":
-            split = ["external_test"]
-        else:
-            split = ["val", "test"]
-        for split in split:
-            print('Performance without test-time augmentation: ', )
-            dataloader = torch.utils.data.DataLoader(
-                echonet.datasets.Echo(root=data_dir, split=split, **kwargs, ),
-                batch_size=batch_size, num_workers=num_workers, shuffle=True, pin_memory=(device.type == "cuda"))
-            loss, yhat, y = echonet.utils.video.run_epoch(model, dataloader, False, None, device)
-            f.write("{} (one clip) R2:   {:.3f} ({:.3f} - {:.3f})\n".format(split, *echonet.utils.bootstrap(y, yhat, sklearn.metrics.r2_score)))
-            f.write("{} (one clip) MAE:  {:.2f} ({:.2f} - {:.2f})\n".format(split, *echonet.utils.bootstrap(y, yhat, sklearn.metrics.mean_absolute_error)))
-            f.write("{} (one clip) RMSE: {:.2f} ({:.2f} - {:.2f})\n".format(split, *tuple(map(math.sqrt, echonet.utils.bootstrap(y, yhat, sklearn.metrics.mean_squared_error)))))
-            f.flush()
+                    print("Block #{}".format(block), flush=True)
+                    if not os.path.isfile(os.path.join(output, "full", "full_predictions_{}.csv".format(block))):
+                        test_dataloader = torch.utils.data.DataLoader(
+                            torch.utils.data.Subset(ds, range(start, min(start + 1000, len(ds)))),
+                            batch_size=1, num_workers=num_workers, shuffle=False, pin_memory=(device.type == "cuda"))
+                        loss, yhat, y = echonet.utils.video.run_epoch(model, test_dataloader, "test", None, device, save_all=True, blocks=100)
 
-            print('Performance with test-time augmentation')
-            ds = echonet.datasets.Echo(root=data_dir, split=split, **kwargs, clips="all")
-            dataloader = torch.utils.data.DataLoader(
-                ds, batch_size=1, num_workers=num_workers, shuffle=False, pin_memory=(device.type == "cuda"))
-            loss, yhat, y = echonet.utils.video.run_epoch(model, dataloader, False, None, device, save_all=True, block_size=batch_size)
-            f.write("{} (all clips) R2:   {:.3f} ({:.3f} - {:.3f})\n".format(split, *echonet.utils.bootstrap(y, np.array(list(map(lambda x: x.mean(), yhat))), sklearn.metrics.r2_score)))
-            f.write("{} (all clips) MAE:  {:.2f} ({:.2f} - {:.2f})\n".format(split, *echonet.utils.bootstrap(y, np.array(list(map(lambda x: x.mean(), yhat))), sklearn.metrics.mean_absolute_error)))
-            f.write("{} (all clips) RMSE: {:.2f} ({:.2f} - {:.2f})\n".format(split, *tuple(map(math.sqrt, echonet.utils.bootstrap(y, np.array(list(map(lambda x: x.mean(), yhat))), sklearn.metrics.mean_squared_error)))))
-            f.flush()
+                        with open(os.path.join(output, "full", "full_predictions_{}.csv".format(block)), "w") as g:
+                            for (filename, pred) in zip(ds.fnames, yhat):
+                                for (i, p) in enumerate(pred):
+                                    g.write("{},{},{:.4f}\n".format(filename, i, p))
+                with open(os.path.join(output, "full_predictions.csv"), "w") as g:
+                    for (block, start) in enumerate(range(0, len(ds), 1000)):
+                        with open(os.path.join(output, "full", "full_predictions_{}.csv".format(block)), "r") as h:
+                            for l in h:
+                                g.write(l)
+        if run_test is False:
+            print('run_test is False')
+        if run_test:
+            if cohort_split == "external_test":
+                split = ["external_test"]
+            else:
+                split = ["val", "test"]
+            for split in split:
+                print('Performance without test-time augmentation: ', )
+                dataloader = torch.utils.data.DataLoader(
+                    echonet.datasets.Echo(root=data_dir, split=split, **kwargs, ),
+                    batch_size=batch_size, num_workers=num_workers, shuffle=True, pin_memory=(device.type == "cuda"))
+                loss, yhat, y = echonet.utils.video.run_epoch(model, dataloader, False, None, device)
+                f.write("{} (one clip) R2:   {:.3f} ({:.3f} - {:.3f})\n".format(split, *echonet.utils.bootstrap(y, yhat, sklearn.metrics.r2_score)))
+                f.write("{} (one clip) MAE:  {:.2f} ({:.2f} - {:.2f})\n".format(split, *echonet.utils.bootstrap(y, yhat, sklearn.metrics.mean_absolute_error)))
+                f.write("{} (one clip) RMSE: {:.2f} ({:.2f} - {:.2f})\n".format(split, *tuple(map(math.sqrt, echonet.utils.bootstrap(y, yhat, sklearn.metrics.mean_squared_error)))))
+                f.flush()
 
-            print('Write full performance to file')
-            with open(os.path.join(output, "{}_mesa_predictions.csv".format(split)), "w") as g:
-                for (filename, pred) in zip(ds.fnames, yhat):
-                    for (i, p) in enumerate(pred):
-                        g.write("{},{},{:.4f}\n".format(filename, i, p))
-            echonet.utils.latexify()
-            yhat = np.array(list(map(lambda x: x.mean(), yhat)))
+                print('Performance with test-time augmentation')
+                ds = echonet.datasets.Echo(root=data_dir, split=split, **kwargs, clips="all")
+                dataloader = torch.utils.data.DataLoader(
+                    ds, batch_size=1, num_workers=num_workers, shuffle=False, pin_memory=(device.type == "cuda"))
+                loss, yhat, y = echonet.utils.video.run_epoch(model, dataloader, False, None, device, save_all=True, block_size=batch_size)
+                f.write("{} (all clips) R2:   {:.3f} ({:.3f} - {:.3f})\n".format(split, *echonet.utils.bootstrap(y, np.array(list(map(lambda x: x.mean(), yhat))), sklearn.metrics.r2_score)))
+                f.write("{} (all clips) MAE:  {:.2f} ({:.2f} - {:.2f})\n".format(split, *echonet.utils.bootstrap(y, np.array(list(map(lambda x: x.mean(), yhat))), sklearn.metrics.mean_absolute_error)))
+                f.write("{} (all clips) RMSE: {:.2f} ({:.2f} - {:.2f})\n".format(split, *tuple(map(math.sqrt, echonet.utils.bootstrap(y, np.array(list(map(lambda x: x.mean(), yhat))), sklearn.metrics.mean_squared_error)))))
+                f.flush()
 
-            print('Plot actual and predicted EF')
-            fig = plt.figure(figsize=(3, 3))
-            lower = min(y.min(), yhat.min())
-            upper = max(y.max(), yhat.max())
-            plt.scatter(y, yhat, color="k", s=1, edgecolor=None, zorder=2)
-            plt.plot([0, 100], [0, 100], linewidth=1, zorder=3)
-            plt.axis([lower - 3, upper + 3, lower - 3, upper + 3])
-            plt.gca().set_aspect("equal", "box")
-            plt.xlabel("Actual EF (%)")
-            plt.ylabel("Predicted EF (%)")
-            plt.xticks([10, 20, 30, 40, 50, 60, 70, 80])
-            plt.yticks([10, 20, 30, 40, 50, 60, 70, 80])
-            plt.grid(color="gainsboro", linestyle="--", linewidth=1, zorder=1)
-            # plt.gca().set_axisbelow(True)
-            plt.tight_layout()
-            plt.savefig(os.path.join(output, "{}_scatter.pdf".format(split)))
-            plt.close(fig)
+                print('Write full performance to file')
+                with open(os.path.join(output, "{}_mesa_predictions.csv".format(split)), "w") as g:
+                    for (filename, pred) in zip(ds.fnames, yhat):
+                        for (i, p) in enumerate(pred):
+                            g.write("{},{},{:.4f}\n".format(filename, i, p))
+                echonet.utils.latexify()
+                yhat = np.array(list(map(lambda x: x.mean(), yhat)))
 
-            print('Plot AUROC')
-            fig = plt.figure(figsize=(3, 3))
-            plt.plot([0, 1], [0, 1], linewidth=1, color="k", linestyle="--")
-            for thresh in [35, 40, 45, 50]:
-                fpr, tpr, _ = sklearn.metrics.roc_curve(y > thresh, yhat)
-                print(thresh, sklearn.metrics.roc_auc_score(y > thresh, yhat))
-                plt.plot(fpr, tpr)
+                print('Plot actual and predicted EF')
+                fig = plt.figure(figsize=(3, 3))
+                lower = min(y.min(), yhat.min())
+                upper = max(y.max(), yhat.max())
+                plt.scatter(y, yhat, color="k", s=1, edgecolor=None, zorder=2)
+                plt.plot([0, 100], [0, 100], linewidth=1, zorder=3)
+                plt.axis([lower - 3, upper + 3, lower - 3, upper + 3])
+                plt.gca().set_aspect("equal", "box")
+                plt.xlabel("Actual EF (%)")
+                plt.ylabel("Predicted EF (%)")
+                plt.xticks([10, 20, 30, 40, 50, 60, 70, 80])
+                plt.yticks([10, 20, 30, 40, 50, 60, 70, 80])
+                plt.grid(color="gainsboro", linestyle="--", linewidth=1, zorder=1)
+                # plt.gca().set_axisbelow(True)
+                plt.tight_layout()
+                plt.savefig(os.path.join(output, "{}_scatter.pdf".format(split)))
+                plt.close(fig)
 
-            plt.axis([-0.01, 1.01, -0.01, 1.01])
-            plt.xlabel("False Positive Rate")
-            plt.ylabel("True Positive Rate")
-            plt.tight_layout()
-            plt.savefig(os.path.join(output, "{}_roc.pdf".format(split)))
-            plt.close(fig)
+                print('Plot AUROC')
+                fig = plt.figure(figsize=(3, 3))
+                plt.plot([0, 1], [0, 1], linewidth=1, color="k", linestyle="--")
+                for thresh in [35, 40, 45, 50]:
+                    fpr, tpr, _ = sklearn.metrics.roc_curve(y > thresh, yhat)
+                    print(thresh, sklearn.metrics.roc_auc_score(y > thresh, yhat))
+                    plt.plot(fpr, tpr)
+
+                plt.axis([-0.01, 1.01, -0.01, 1.01])
+                plt.xlabel("False Positive Rate")
+                plt.ylabel("True Positive Rate")
+                plt.tight_layout()
+                plt.savefig(os.path.join(output, "{}_roc.pdf".format(split)))
+                plt.close(fig)
 
 
 def run_epoch(model, dataloader, train, optim, device, save_all=False, block_size=None):
