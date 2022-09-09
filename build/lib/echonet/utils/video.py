@@ -111,6 +111,8 @@ def run(
     np.random.seed(seed)
     torch.manual_seed(seed)
 
+    print(output, task)
+
     # Set default output directory
     if output is None:
         output = os.path.join("output", "video", "{}_{}_{}_{}".format(model_name, frames, period, "pretrained" if pretrained else "random"))
@@ -267,7 +269,8 @@ def run(
                     with open(os.path.join(output, "full", "full_predictions_{}.csv".format(block)), "r") as h:
                         for l in h:
                             g.write(l)
-
+        if run_test is False:
+            print('run_test is False')
         if run_test:
             if cohort_split == "external_test":
                 split = ["external_test"]
@@ -295,7 +298,7 @@ def run(
                 f.flush()
 
                 print('Write full performance to file')
-                with open(os.path.join(output, "{}_predictions.csv".format(split)), "w") as g:
+                with open(os.path.join(output, "{}_mesa_predictions.csv".format(split)), "w") as g:
                     for (filename, pred) in zip(ds.fnames, yhat):
                         for (i, p) in enumerate(pred):
                             g.write("{},{},{:.4f}\n".format(filename, i, p))
