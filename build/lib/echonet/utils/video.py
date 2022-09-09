@@ -274,7 +274,7 @@ def run(
             else:
                 split = ["val", "test"]
             for split in split:
-                # Performance without test-time augmentation
+                print('Performance without test-time augmentation')
                 dataloader = torch.utils.data.DataLoader(
                     echonet.datasets.Echo(root=data_dir, split=split, **kwargs),
                     batch_size=batch_size, num_workers=num_workers, shuffle=True, pin_memory=(device.type == "cuda"))
@@ -284,7 +284,7 @@ def run(
                 f.write("{} (one clip) RMSE: {:.2f} ({:.2f} - {:.2f})\n".format(split, *tuple(map(math.sqrt, echonet.utils.bootstrap(y, yhat, sklearn.metrics.mean_squared_error)))))
                 f.flush()
 
-                # Performance with test-time augmentation
+                print('Performance with test-time augmentation')
                 ds = echonet.datasets.Echo(root=data_dir, split=split, **kwargs, clips="all")
                 dataloader = torch.utils.data.DataLoader(
                     ds, batch_size=1, num_workers=num_workers, shuffle=False, pin_memory=(device.type == "cuda"))
@@ -294,7 +294,7 @@ def run(
                 f.write("{} (all clips) RMSE: {:.2f} ({:.2f} - {:.2f})\n".format(split, *tuple(map(math.sqrt, echonet.utils.bootstrap(y, np.array(list(map(lambda x: x.mean(), yhat))), sklearn.metrics.mean_squared_error)))))
                 f.flush()
 
-                # Write full performance to file
+                print('Write full performance to file')
                 with open(os.path.join(output, "{}_predictions.csv".format(split)), "w") as g:
                     for (filename, pred) in zip(ds.fnames, yhat):
                         for (i, p) in enumerate(pred):
@@ -302,7 +302,7 @@ def run(
                 echonet.utils.latexify()
                 yhat = np.array(list(map(lambda x: x.mean(), yhat)))
 
-                # Plot actual and predicted EF
+                print('Plot actual and predicted EF')
                 fig = plt.figure(figsize=(3, 3))
                 lower = min(y.min(), yhat.min())
                 upper = max(y.max(), yhat.max())
@@ -320,7 +320,7 @@ def run(
                 plt.savefig(os.path.join(output, "{}_scatter.pdf".format(split)))
                 plt.close(fig)
 
-                # Plot AUROC
+                print('Plot AUROC')
                 fig = plt.figure(figsize=(3, 3))
                 plt.plot([0, 1], [0, 1], linewidth=1, color="k", linestyle="--")
                 for thresh in [35, 40, 45, 50]:
