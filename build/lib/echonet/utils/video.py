@@ -141,7 +141,8 @@ def run(
     scheduler = torch.optim.lr_scheduler.StepLR(optim, lr_step_period)
 
     # Compute mean and std
-    mean, std = echonet.utils.get_mean_and_std(echonet.datasets.Echo(root=data_dir, split=cohort_split))
+    print(data_dir, cohort_split)
+    mean, std = echonet.utils.get_mean_and_std(echonet.datasets.Echo(root=data_dir, split=cohort_split, external_test_location=data_dir))
     kwargs = {"target_type": task,
               "mean": mean,
               "std": std,
