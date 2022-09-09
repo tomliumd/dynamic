@@ -1,5 +1,5 @@
 from echonet.__version__ import __version__
-from echonet.CONFIG import config
+from echonet.config import CONFIG as config
 import echonet.datasets as datasets
 import echonet.utils as utils
 
