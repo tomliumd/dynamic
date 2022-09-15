@@ -164,6 +164,7 @@ def run(
 
     # Run training and testing loops
     if cohort_split != "external_test":
+        print('Running Training')
         with open(os.path.join(output, "log.csv"), "a") as f:
             epoch_resume = 0
             bestLoss = float("inf")
