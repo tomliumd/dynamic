@@ -298,7 +298,7 @@ def run(
                 ds = echonet.datasets.Echo(root=data_dir, split=split, **kwargs, clips="all")
                 print(ds.external_test_values, ds.external_test_location)
                 dataloader = torch.utils.data.DataLoader(
-                    ds, batch_size=batch_size, num_workers=num_workers, shuffle=False, pin_memory=(device.type == "cuda"))
+                    ds, batch_size=batch_size, num_workers=num_workers, shuffle=False, pin_memory=(device.type == "cuda"), collate_fn=_video_collate_fn())
                 loss, yhat, y = echonet.utils.video.run_epoch(model, dataloader, False, None, device, save_all=True)
                 f.write("{} (all clips) R2:   {:.3f} ({:.3f} - {:.3f})\n".format(split, *echonet.utils.bootstrap(y, np.array(list(map(lambda x: x.mean(), yhat))), sklearn.metrics.r2_score)))
                 f.write("{} (all clips) MAE:  {:.2f} ({:.2f} - {:.2f})\n".format(split, *echonet.utils.bootstrap(y, np.array(list(map(lambda x: x.mean(), yhat))), sklearn.metrics.mean_absolute_error)))
@@ -425,3 +425,45 @@ def run_epoch(model, dataloader, train, optim, device, save_all=False, block_siz
     y = np.concatenate(y)
 
     return total / n, yhat, y
+
+def _video_collate_fn(x):
+    """Collate function for Pytorch dataloader to merge multiple videos.
+
+    This function should be used in a dataloader for a dataset that returns
+    a video as the first element, along with some (non-zero) tuple of
+    targets. Then, the input x is a list of tuples:
+      - x[i][0] is the i-th video in the batch
+      - x[i][1] are the targets for the i-th video
+
+    This function returns a 3-tuple:
+      - The first element is the videos concatenated along the frames
+        dimension. This is done so that videos of different lengths can be
+        processed together (tensors cannot be "jagged", so we cannot have
+        a dimension for video, and another for frames).
+      - The second element is contains the targets with no modification.
+      - The third element is a list of the lengths of the videos in frames.
+    """
+    video, target = zip(*x)  # Extract the videos and targets
+
+    # ``video'' is a tuple of length ``batch_size''
+    #   Each element has shape (channels=3, frames, height, width)
+    #   height and width are expected to be the same across videos, but
+    #   frames can be different.
+
+    # ``target'' is also a tuple of length ``batch_size''
+    # Each element is a tuple of the targets for the item.
+
+    i = list(map(lambda t: t.shape[1], video))  # Extract lengths of videos in frames
+
+    # This contatenates the videos along the the frames dimension (basically
+    # playing the videos one after another). The frames dimension is then
+    # moved to be first.
+    # Resulting shape is (total frames, channels=3, height, width)
+    video = torch.as_tensor(np.swapaxes(np.concatenate(video, 1), 0, 1))
+
+    # Swap dimensions (approximately a transpose)
+    # Before: target[i][j] is the j-th target of element i
+    # After:  target[i][j] is the i-th target of element j
+    target = zip(*target)
+
+    return video, target, i
