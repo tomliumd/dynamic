@@ -116,6 +116,7 @@ class Echo(torchvision.datasets.VisionDataset):
                 self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
                 self.outcome = [f for (f, k) in zip(self.outcome, keep) if k]
             else:
+                print('no EF measurements are selected defaulting to prediction only')
                 self.fnames = sorted(os.listdir(self.external_test_location))
 
         else:
