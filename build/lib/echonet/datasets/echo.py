@@ -133,6 +133,7 @@ class Echo(torchvision.datasets.VisionDataset):
                 raise FileNotFoundError(os.path.join(self.root, "Videos", sorted(missing)[0]))
 
             keep = [f[1] != '.' for f in self.outcome]
+            print('Removing ', pandas.Series(keep).value_counts())
             self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
             self.outcome = [f for (f, k) in zip(self.outcome, keep) if k]
 
