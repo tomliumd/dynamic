@@ -156,7 +156,6 @@ def run(
 
     # Set up datasets and dataloaders
     dataset = {}
-    print('1')
     if cohort_split == "external_test":
         dataset[cohort_split] = echonet.datasets.Echo(root=data_dir, split=cohort_split, **kwargs, pad=12)
     else:
@@ -167,7 +166,6 @@ def run(
             dataset["train"] = torch.utils.data.Subset(dataset["train"], indices)
         dataset["val"] = echonet.datasets.Echo(root=data_dir, split="val", **kwargs)
 
-    print('2')
     # Run training and testing loops
     if cohort_split != "external_test":
         print('Running Training')
@@ -274,7 +272,7 @@ def run(
                         with open(os.path.join(output, "full", "full_predictions_{}.csv".format(block)), "r") as h:
                             for l in h:
                                 g.write(l)
-    print(4)
+
     if run_test is False:
         print('run_test is False')
     if run_test:
