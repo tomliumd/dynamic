@@ -350,6 +350,7 @@ def run(
 
 def run_epoch(model, dataloader, train, optim, device, save_all=False, block_size=None):
     """Run one epoch of training/evaluation for segmentation.
+    echonet.utils.video.run_epoch(model, test_dataloader, "test", None, device, save_all=True, blocks=100)
 
     Args:
         model (torch.nn.Module): Model to train/evaulate.
@@ -379,9 +380,8 @@ def run_epoch(model, dataloader, train, optim, device, save_all=False, block_siz
 
     with torch.set_grad_enabled(train):
         with tqdm.tqdm(total=len(dataloader)) as pbar:
-            for (i, (X, outcome)) in enumerate(dataloader):
-                print(i, X, outcome)
-
+            for item in enumerate(dataloader):
+                print(item)
                 y.append(outcome.numpy())
                 X = X.to(device)
                 outcome = outcome.to(device)
@@ -454,7 +454,7 @@ def _video_collate_fn(x):
     # ``target'' is also a tuple of length ``batch_size''
     # Each element is a tuple of the targets for the item.
 
-    i = list(map(lambda t: t.shape[1], video))  # Extract lengths of videos in frames
+    i = list(map(lambda t: t.shape[0], video))  # Extract lengths of videos in frames
 
     # This contatenates the videos along the the frames dimension (basically
     # playing the videos one after another). The frames dimension is then
@@ -465,6 +465,6 @@ def _video_collate_fn(x):
     # Swap dimensions (approximately a transpose)
     # Before: target[i][j] is the j-th target of element i
     # After:  target[i][j] is the i-th target of element j
-    target = zip(*target)
+    target = zip(*list(target))
 
     return video, target, i
