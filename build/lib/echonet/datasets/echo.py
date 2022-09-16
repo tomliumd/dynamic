@@ -69,7 +69,7 @@ class Echo(torchvision.datasets.VisionDataset):
                  noise=None,
                  target_transform=None,
                  external_test_location=None,
-                 external_test_values=None):
+                 external_test_values='/data/tom/MESA_Echos/weights/EF/FileList.csv'):
         if root is None:
             root = echonet.config.DATA_DIR
 
