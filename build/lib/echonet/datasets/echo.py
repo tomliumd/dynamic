@@ -103,12 +103,12 @@ class Echo(torchvision.datasets.VisionDataset):
                            os.path.splitext(fn)[1] == ""]  # Assume avi if no suffix
             self.outcome = data.values.tolist()
 
-            missing = set(self.fnames) - set(os.listdir(os.path.join(self.external_test_location)))
+            missing = set(self.fnames) - set(os.path.join(self.external_test_location, x) for x in os.listdir(self.external_test_location))
             if len(missing) != 0:
                 print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root, "Videos")))
                 for f in sorted(missing):
                     print("\t", f)
-                raise FileNotFoundError(os.path.join(self.root, "Videos", sorted(missing)[0]))
+                raise FileNotFoundError(os.path.join(self.external_test_location, sorted(missing)[0]))
 
         else:
             # Load video-level labels
