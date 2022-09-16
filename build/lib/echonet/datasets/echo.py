@@ -94,26 +94,29 @@ class Echo(torchvision.datasets.VisionDataset):
         self.fnames, self.outcome = [], []
 
         if self.split == "EXTERNAL_TEST" or self.split == "external_test":
-            with open(self.external_test_values) as f:
-                data = pandas.read_csv(f)
+            if self.external_test_values is not None:
+                with open(self.external_test_values) as f:
+                    data = pandas.read_csv(f)
 
-            self.header = data.columns.tolist()
-            self.fnames = data["FileName"].tolist()
-            self.fnames = [os.path.join(self.external_test_location, fn.split('/')[-1]) + ".avi" for fn in self.fnames if
-                           os.path.splitext(fn)[1] == ""]  # Assume avi if no suffix
-            self.outcome = data.values.tolist()
+                self.header = data.columns.tolist()
+                self.fnames = data["FileName"].tolist()
+                self.fnames = [os.path.join(self.external_test_location, fn.split('/')[-1]) + ".avi" for fn in self.fnames if
+                               os.path.splitext(fn)[1] == ""]  # Assume avi if no suffix
+                self.outcome = data.values.tolist()
 
-            missing = set(self.fnames) - set(os.path.join(self.external_test_location, x) for x in os.listdir(self.external_test_location))
-            if len(missing) != 0:
-                print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root, "Videos")))
-                for f in sorted(missing):
-                    print("\t", f)
-                raise FileNotFoundError(os.path.join(self.external_test_location, sorted(missing)[0]))
+                missing = set(self.fnames) - set(os.path.join(self.external_test_location, x) for x in os.listdir(self.external_test_location))
+                if len(missing) != 0:
+                    print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root, "Videos")))
+                    for f in sorted(missing):
+                        print("\t", f)
+                    raise FileNotFoundError(os.path.join(self.external_test_location, sorted(missing)[0]))
 
-            keep = [f[1] != '.' for f in self.outcome]
-            print('Removing ', pandas.Series(keep).value_counts())
-            self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
-            self.outcome = [f for (f, k) in zip(self.outcome, keep) if k]
+                keep = [f[1] != '.' for f in self.outcome]
+                print('Removing ', pandas.Series(keep).value_counts())
+                self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
+                self.outcome = [f for (f, k) in zip(self.outcome, keep) if k]
+            else:
+                self.fnames = sorted(os.listdir(self.external_test_location))
 
         else:
             # Load video-level labels
