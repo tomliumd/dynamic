@@ -298,7 +298,7 @@ def run(
                 ds = echonet.datasets.Echo(root=data_dir, split=split, **kwargs, clips="all")
                 print(ds.external_test_values, ds.external_test_location)
                 dataloader = torch.utils.data.DataLoader(
-                    ds, batch_size=batch_size, num_workers=num_workers, shuffle=False, pin_memory=(device.type == "cuda"))
+                    ds, batch_size=1, num_workers=0, shuffle=False, pin_memory=(device.type == "cuda"))
                 loss, yhat, y = echonet.utils.video.run_epoch(model, dataloader, False, None, device, save_all=True, block_size=batch_size)
                 f.write("{} (all clips) R2:   {:.3f} ({:.3f} - {:.3f})\n".format(split, *echonet.utils.bootstrap(y, np.array(list(map(lambda x: x.mean(), yhat))), sklearn.metrics.r2_score)))
                 f.write("{} (all clips) MAE:  {:.2f} ({:.2f} - {:.2f})\n".format(split, *echonet.utils.bootstrap(y, np.array(list(map(lambda x: x.mean(), yhat))), sklearn.metrics.mean_absolute_error)))
@@ -380,8 +380,7 @@ def run_epoch(model, dataloader, train, optim, device, save_all=False, block_siz
 
     with torch.set_grad_enabled(train):
         with tqdm.tqdm(total=len(dataloader)) as pbar:
-            for item in enumerate(dataloader):
-                print(item)
+            for (i, (X, outcome)) in enumerate(dataloader):
                 y.append(outcome.numpy())
                 X = X.to(device)
                 outcome = outcome.to(device)
