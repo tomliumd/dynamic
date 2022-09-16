@@ -88,7 +88,10 @@ class Echo(torchvision.datasets.VisionDataset):
         self.pad = pad
         self.noise = noise
         self.target_transform = target_transform
-        self.external_test_location = external_test_location
+        if self.split == "EXTERNAL_TEST":
+            self.external_test_location = root
+        else:
+            self.external_test_location = external_test_location
         self.external_test_values = external_test_values
 
         self.fnames, self.outcome = [], []
