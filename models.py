@@ -36,6 +36,7 @@ class ClassificationModel(torch.nn.Module):
 
 class AgeModel(torch.nn.Module):
     """video classification used to classify age conditions.
+    Runs on a deeplabv3_resnet model
     """
     def __init__(self,
             measurements=['Age'],

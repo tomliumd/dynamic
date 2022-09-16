@@ -307,9 +307,9 @@ def run(
 
                 print('Write full performance to file')
                 with open(os.path.join(output, "{}_mesa_predictions.csv".format(split)), "w") as g:
-                    for (filename, pred) in zip(ds.fnames, yhat):
-                        for (i, p) in enumerate(pred):
-                            g.write("{},{},{:.4f}\n".format(filename, i, p))
+                    for (filename, pred) in zip(ds.fnames, yhat, y):
+                        for (i, p, orig) in enumerate(pred):
+                            g.write("{},{},{},{:.4f}\n".format(filename, i, orig, p))
                 echonet.utils.latexify()
                 yhat = np.array(list(map(lambda x: x.mean(), yhat)))
 
