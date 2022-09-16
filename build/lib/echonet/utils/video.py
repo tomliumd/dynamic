@@ -44,6 +44,7 @@ def run(
     output=None,
     task="EF",
     cohort_split="external_test",
+    ext_values=None,
 
     model_name="r2plus1d_18",
     pretrained=True,
@@ -281,6 +282,8 @@ def run(
             else:
                 split = ["val", "test"]
             for split in split:
+                kwargs['external_test_values'] = 'data/tom/MESA_Echos/Output/weights/EF/FileList.csv'
+
                 print('Performance without test-time augmentation: ', )
                 dataloader = torch.utils.data.DataLoader(
                     echonet.datasets.Echo(root=data_dir, split=split, **kwargs, ),
