@@ -282,7 +282,7 @@ def run(
             else:
                 split = ["val", "test"]
             for split in split:
-                kwargs['external_test_values'] = 'data/tom/MESA_Echos/Output/weights/EF/FileList.csv'
+                kwargs['external_test_values'] = ext_values
 
                 print('Performance without test-time augmentation: ', )
                 dataloader = torch.utils.data.DataLoader(
