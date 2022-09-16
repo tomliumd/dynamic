@@ -4,7 +4,8 @@ import math
 import os
 import time
 
-import click
+from collections import defaultdict
+
 import matplotlib.pyplot as plt
 import numpy as np
 import sklearn.metrics
@@ -142,7 +143,7 @@ def run(
     scheduler = torch.optim.lr_scheduler.StepLR(optim, lr_step_period)
 
     # Compute mean and std
-    mean, std = echonet.utils.get_mean_and_std(echonet.datasets.Echo(root=data_dir, split=cohort_split, external_test_location=data_dir))
+    mean, std = echonet.utils.get_mean_and_std(echonet.datasets.Echo(root=data_dir, split=cohort_split))
     kwargs = {"target_type": task,
               "mean": mean,
               "std": std,
@@ -166,9 +167,9 @@ def run(
         dataset["val"] = echonet.datasets.Echo(root=data_dir, split="val", **kwargs)
 
     # Run training and testing loops
-
-    with open(os.path.join(output, "log.csv"), "a") as f:
-        if cohort_split != "external_test":
+    if cohort_split != "external_test":
+        print('Running Training')
+        with open(os.path.join(output, "log.csv"), "a") as f:
             epoch_resume = 0
             bestLoss = float("inf")
             try:

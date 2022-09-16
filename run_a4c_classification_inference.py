@@ -62,7 +62,10 @@ class A4cClassificationInferenceEngine:
         if not isinstance(out_dir, Path):
             out_dir = Path(out_dir)
         if not out_dir.exists():
-            out_dir.mkdir()
+            try:
+                out_dir.makedirs()
+            except:
+                print('no need to make dir')
         
         # Load model if not loaded already
         if self.model is None:
