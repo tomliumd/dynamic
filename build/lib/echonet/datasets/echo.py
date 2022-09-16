@@ -110,6 +110,11 @@ class Echo(torchvision.datasets.VisionDataset):
                     print("\t", f)
                 raise FileNotFoundError(os.path.join(self.external_test_location, sorted(missing)[0]))
 
+            keep = [f[1] != '.' for f in self.outcome]
+            print('Removing ', pandas.Series(keep).value_counts())
+            self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
+            self.outcome = [f for (f, k) in zip(self.outcome, keep) if k]
+
         else:
             # Load video-level labels
             with open(os.path.join(self.root, "FileList.csv")) as f:
@@ -134,6 +139,11 @@ class Echo(torchvision.datasets.VisionDataset):
 
             keep = [f[1] != '.' for f in self.outcome]
             print('Removing ', pandas.Series(keep).value_counts())
+            self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
+            self.outcome = [f for (f, k) in zip(self.outcome, keep) if k]
+
+            # A small number of videos are missing traces; remove these videos
+            keep = [len(self.frames[f]) >= 2 for f in self.fnames]
             self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
             self.outcome = [f for (f, k) in zip(self.outcome, keep) if k]
 
