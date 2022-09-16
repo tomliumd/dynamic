@@ -274,7 +274,7 @@ class Echo(torchvision.datasets.VisionDataset):
                 target.append(mask)
             else:
                 if self.split == "CLINICAL_TEST" or self.split == "EXTERNAL_TEST":
-                    if len(self.outcome) == 0:
+                    if len(self.outcome) > 0:
                         target.append(np.float32(self.outcome[index][self.header.index(t)]))
                     else:
                         target.append(np.float32(0))
