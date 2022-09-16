@@ -47,7 +47,7 @@ class AgeClassificationInferenceEngine:
                    in_dir: Union[Path, str], out_dir: Union[Path, str], batch_size: int = 4, clip_length: int = 32,
                    h=480, w=640, channels_in=3, channels_out=4,
                    n_threads=16, verbose : bool = True, save_csv=True, save_avi=True, save_npy=False, save_plot=True
-                   ) -> None
+                   ) -> None:
 
         """Runs inference on all .avi files in a directory. Saves results to a .csv file.
 
