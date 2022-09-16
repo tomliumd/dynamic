@@ -293,6 +293,7 @@ def run(
 
                 print('Performance with test-time augmentation')
                 ds = echonet.datasets.Echo(root=data_dir, split=split, **kwargs, clips="all")
+                print(ds.external_test_values, ds.external_test_location)
                 dataloader = torch.utils.data.DataLoader(
                     ds, batch_size=batch_size, num_workers=num_workers, shuffle=False, pin_memory=(device.type == "cuda"))
                 loss, yhat, y = echonet.utils.video.run_epoch(model, dataloader, False, None, device, save_all=True)
