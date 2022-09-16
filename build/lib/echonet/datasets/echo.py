@@ -68,7 +68,8 @@ class Echo(torchvision.datasets.VisionDataset):
                  pad=None,
                  noise=None,
                  target_transform=None,
-                 external_test_location=None):
+                 external_test_location=None,
+                 external_test_values=None):
         if root is None:
             root = echonet.config.DATA_DIR
 
@@ -88,11 +89,28 @@ class Echo(torchvision.datasets.VisionDataset):
         self.noise = noise
         self.target_transform = target_transform
         self.external_test_location = external_test_location
+        self.external_test_values = external_test_values
 
         self.fnames, self.outcome = [], []
 
         if self.split == "EXTERNAL_TEST" or self.split == "external_test":
             self.fnames = sorted(os.listdir(self.external_test_location))
+            with open(self.external_test_values) as f:
+                data = pandas.read_csv(f)
+
+            self.header = data.columns.tolist()
+            self.fnames = data["FileName"].tolist()
+            self.fnames = [fn + ".avi" for fn in self.fnames if
+                           os.path.splitext(fn)[1] == ""]  # Assume avi if no suffix
+            self.outcome = data.values.tolist()
+
+            missing = set(self.fnames) - set(os.listdir(os.path.join(self.external_test_location)))
+            if len(missing) != 0:
+                print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root, "Videos")))
+                for f in sorted(missing):
+                    print("\t", f)
+                raise FileNotFoundError(os.path.join(self.root, "Videos", sorted(missing)[0]))
+
         else:
             # Load video-level labels
             with open(os.path.join(self.root, "FileList.csv")) as f:

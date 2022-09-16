@@ -32,3 +32,16 @@ class ClassificationModel(torch.nn.Module):
     
     def forward(self, x):
         return self.model(x)
+
+
+class AgeModel(torch.nn.Module):
+    """video classification used to classify age conditions.
+    """
+    def __init__(self,
+            measurements=['Age'],
+        ) -> None:
+        super().__init__()
+        self.model = torchvision.models.segmentation.deeplabv3_resnet50(num_classes=len(measurements) + 1)
+
+    def forward(self, x):
+        return torch.sigmoid(self.model(x)['out'])

@@ -272,7 +272,7 @@ class PlaxHypertrophyInferenceEngine:
         # Start inference threads. Run inference, save results to out_dir
         p('Running inference')
         threads = []
-        for fn, clip, preds in engine._run_on_clips(list(in_dir.iterdir()), verbose=verbose, 
+        for fn, clip, preds in self._run_on_clips(list(in_dir.iterdir()), verbose=verbose,
                                 h=h, w=w, channels_in=channels_in, channels_out=channels_out,
                                 batch_size=batch_size):
             if len(threads) > n_threads:
