@@ -252,8 +252,13 @@ class Echo(torchvision.datasets.VisionDataset):
                 target.append(mask)
             else:
                 if self.split == "CLINICAL_TEST" or self.split == "EXTERNAL_TEST":
-                    target.append(np.float32(0))
+                    if self.outcome is not None:
+                        print('Appending sonographer measurement')
+                        target.append(np.float32(self.outcome[index][self.header.index(t)]))
+                    else:
+                        target.append(np.float32(0))
                 else:
+                    print('Appending sonographer measurement')
                     target.append(np.float32(self.outcome[index][self.header.index(t)]))
 
         if target != []:
