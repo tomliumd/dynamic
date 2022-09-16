@@ -132,6 +132,10 @@ class Echo(torchvision.datasets.VisionDataset):
                     print("\t", f)
                 raise FileNotFoundError(os.path.join(self.root, "Videos", sorted(missing)[0]))
 
+            keep = [len(self.outcome[f][2]) >= 2 for f in self.outcome]
+            self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
+            self.outcome = [f for (f, k) in zip(self.outcome, keep) if k]
+
             # Load traces
             self.frames = collections.defaultdict(list)
             self.trace = collections.defaultdict(_defaultdict_of_lists)
