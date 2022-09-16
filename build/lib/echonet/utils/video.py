@@ -283,7 +283,6 @@ def run(
                 split = ["val", "test"]
             for split in split:
                 kwargs['external_test_values'] = ext_values
-                print(kwargs['external_test_values'])
 
                 print('Performance without test-time augmentation: ', )
                 dataloader = torch.utils.data.DataLoader(
