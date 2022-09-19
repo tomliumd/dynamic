@@ -45,4 +45,4 @@ class AgeModel(torch.nn.Module):
         self.model = torchvision.models.segmentation.deeplabv3_resnet50(num_classes=len(measurements) + 1)
 
     def forward(self, x):
-        return torch.sigmoid(self.model(x)['out'])
+        return torch.sigmoid(self.model(x)['out']) #linear or sigmoid??
