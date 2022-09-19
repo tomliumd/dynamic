@@ -18,9 +18,9 @@ import shutil
 import sys
 from threading import Thread, Lock
 
-from utils import BoolAction, get_clip_dims, read_clip, get_systole_diastole, get_lens_np, get_points_np
-from utils import get_angles_np, get_pred_measurements, overlay_preds, model_paths
-from models import PlaxModel as Model
+from .utils import BoolAction, get_clip_dims, read_clip, get_systole_diastole, get_lens_np, get_points_np
+from .utils import get_angles_np, get_pred_measurements, overlay_preds, model_paths
+from .models import PlaxModel as Model
 
 
 plt_thread_lock = Lock()
