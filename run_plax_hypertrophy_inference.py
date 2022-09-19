@@ -270,7 +270,7 @@ class PlaxHypertrophyInferenceEngine:
             out_dir.mkdir()
 
         # Start inference threads. Run inference, save results to out_dir
-        p('Running inference')
+        p('Running inference, in_dir: ', in_dir)
         threads = []
         for fn, clip, preds in self._run_on_clips(list(in_dir.iterdir()), verbose=verbose,
                                 h=h, w=w, channels_in=channels_in, channels_out=channels_out,
