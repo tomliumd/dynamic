@@ -32,6 +32,56 @@ class AgeClassificationInferenceEngine:
         self.device = device
         self.res = res
         self.model = None
+        self.batch
+
+
+        """Trains/tests EF prediction model.
+
+                \b
+                Args:
+                    data_dir (str, optional): Directory containing dataset. Defaults to
+                        `echonet.config.DATA_DIR`.
+                    output (str, optional): Directory to place outputs. Defaults to
+                        output/video/<model_name>_<pretrained/random>/.
+                    task (str, optional): Name of task to predict. Options are the headers
+                        of FileList.csv. Defaults to ``EF''.
+                    model_name (str, optional): Name of model. One of ``mc3_18'',
+                        ``r2plus1d_18'', or ``r3d_18''
+                        (options are torchvision.models.video.<model_name>)
+                        Defaults to ``r2plus1d_18''.
+                    pretrained (bool, optional): Whether to use pretrained weights for model
+                        Defaults to True.
+                    weights (str, optional): Path to checkpoint containing weights to
+                        initialize model. Defaults to None.
+                    run_test (bool, optional): Whether or not to run on test.
+                        Defaults to False.
+                    num_epochs (int, optional): Number of epochs during training.
+                        Defaults to 45.
+                    lr (float, optional): Learning rate for SGD
+                        Defaults to 1e-4.
+                    weight_decay (float, optional): Weight decay for SGD
+                        Defaults to 1e-4.
+                    lr_step_period (int or None, optional): Period of learning rate decay
+                        (learning rate is decayed by a multiplicative factor of 0.1)
+                        Defaults to 15.
+                    frames (int, optional): Number of frames to use in clip
+                        Defaults to 32.
+                    period (int, optional): Sampling period for frames
+                        Defaults to 2.
+                    n_train_patients (int or None, optional): Number of training patients
+                        for ablations. Defaults to all patients.
+                    num_workers (int, optional): Number of subprocesses to use for data
+                        loading. If 0, the data will be loaded in the main process.
+                        Defaults to 4.
+                    device (str or None, optional): Name of device to run on. Options from
+                        https://pytorch.org/docs/stable/tensor_attributes.html#torch.torch.device
+                        Defaults to ``cuda'' if available, and ``cpu'' otherwise.
+                    batch_size (int, optional): Number of samples to load per batch
+                        Defaults to 20.
+                    seed (int, optional): Seed for random number generator. Defaults to 0.
+                """
+
+
 
     def load_model(self):
         """Loads model onto device.
