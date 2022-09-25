@@ -377,6 +377,7 @@ class Echo2(torchvision.datasets.VisionDataset):
             if len(missing) != 0:
                 print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root)))
                 for f in sorted(missing):
+                    pass
                     # print("\t", f)
                 # raise FileNotFoundError(os.path.join(self.root, sorted(missing)[0]))
 
