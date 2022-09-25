@@ -59,7 +59,7 @@ class Echo(torchvision.datasets.VisionDataset):
         external_test_location (string): Path to videos to use for external testing.
     """
 
-    def __init__(self, root=None,
+    def __init__(self, root=None, measurement_location=None,
                  split="train", target_type="EF",
                  mean=0., std=1.,
                  length=16, period=2,
@@ -88,6 +88,7 @@ class Echo(torchvision.datasets.VisionDataset):
         self.noise = noise
         self.target_transform = target_transform
         self.external_test_location = external_test_location
+        self.measurement_location = measurement_location
 
         self.fnames, self.outcome = [], []
 
@@ -95,7 +96,7 @@ class Echo(torchvision.datasets.VisionDataset):
             self.fnames = sorted(os.listdir(self.external_test_location))
         else:
             # Load video-level labels
-            with open(os.path.join(self.root, "FileList.csv")) as f:
+            with open(os.path.join(self.measurement_location, "FileList.csv")) as f:
                 data = pandas.read_csv(f)
             data["Split"].map(lambda x: x.upper())
 
@@ -119,7 +120,7 @@ class Echo(torchvision.datasets.VisionDataset):
             self.frames = collections.defaultdict(list)
             self.trace = collections.defaultdict(_defaultdict_of_lists)
 
-            with open(os.path.join(self.root, "VolumeTracings.csv")) as f:
+            with open(os.path.join(self.measurement_location, "VolumeTracings.csv")) as f:
                 header = f.readline().strip().split(",")
                 assert header == ["FileName", "X1", "Y1", "X2", "Y2", "Frame"]
 
