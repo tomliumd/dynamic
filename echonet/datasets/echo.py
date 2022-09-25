@@ -109,12 +109,12 @@ class Echo(torchvision.datasets.VisionDataset):
             self.outcome = data.values.tolist()
 
             # Check that files are present
-            missing = set(self.fnames) - set(os.listdir(os.path.join(self.root, "Videos")))
+            missing = set(self.fnames) - set(os.listdir(os.path.join(self.root)))
             if len(missing) != 0:
-                print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root, "Videos")))
+                print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root)))
                 for f in sorted(missing):
                     print("\t", f)
-                raise FileNotFoundError(os.path.join(self.root, "Videos", sorted(missing)[0]))
+                raise FileNotFoundError(os.path.join(self.root, sorted(missing)[0]))
 
             # Load traces
             self.frames = collections.defaultdict(list)
