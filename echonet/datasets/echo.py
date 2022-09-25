@@ -387,7 +387,7 @@ class Echo2(torchvision.datasets.VisionDataset):
         elif self.split == "CLINICAL_TEST":
             video = os.path.join(self.root, "ProcessedStrainStudyA4c", self.fnames[index])
         else:
-            video = os.path.join(self.root, "Videos", self.fnames[index])
+            video = os.path.join(self.root, self.fnames[index])
 
         # Load video into np.array
         video = echonet.utils.loadvideo(video).astype(np.float32)
