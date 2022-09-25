@@ -383,7 +383,6 @@ class Echo2(torchvision.datasets.VisionDataset):
 
     def __getitem__(self, index):
         # Find filename of video
-        print("finding: ", index)
         if self.split == "EXTERNAL_TEST":
             video = os.path.join(self.external_test_location, self.fnames[index])
         elif self.split == "CLINICAL_TEST":
@@ -478,7 +477,6 @@ class Echo2(torchvision.datasets.VisionDataset):
                 if self.split == "CLINICAL_TEST" or self.split == "EXTERNAL_TEST":
                     target.append(np.float32(0))
                 else:
-                    print(t, index, self.outcome[index][self.header.index(t)])
                     target.append(np.float32(self.outcome[index][self.header.index(t)]))
 
         if target != []:
