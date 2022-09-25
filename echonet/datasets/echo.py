@@ -359,8 +359,9 @@ class Echo2(torchvision.datasets.VisionDataset):
         else:
             # Load video-level labels
             with open(os.path.join(self.measurement_location, "FileList.csv")) as f:
+                print("Loading video-level labels")
                 data = pandas.read_csv(f)
-            data["Split"].map(lambda x: x.upper())
+            data["Split"] = data["Split"].map(lambda x: x.upper())
 
             if self.split != "ALL":
                 data = data[data["Split"] == self.split]
@@ -377,7 +378,7 @@ class Echo2(torchvision.datasets.VisionDataset):
                 print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root)))
                 for f in sorted(missing):
                     print("\t", f)
-                raise FileNotFoundError(os.path.join(self.root, sorted(missing)[0]))
+                # raise FileNotFoundError(os.path.join(self.root, sorted(missing)[0]))
 
     def __getitem__(self, index):
         # Find filename of video
