@@ -69,7 +69,8 @@ class Echo(torchvision.datasets.VisionDataset):
                  noise=None,
                  target_transform=None,
                  external_test_location=None,
-                 external_test_values='/data/tom/MESA_Echos/weights/EF/FileList.csv'):
+                 external_test_values='/data/tom/MESA_Echos/weights/EF/FileList.csv',
+                 measurement_location=None):
         if root is None:
             root = echonet.config.DATA_DIR
 
@@ -92,7 +93,12 @@ class Echo(torchvision.datasets.VisionDataset):
             self.external_test_location = root
         else:
             self.external_test_location = external_test_location
+
         self.external_test_values = external_test_values
+
+        if measurement_location is None:
+            self.measurement_location = root
+        self.measurement_location = measurement_location
 
         self.fnames, self.outcome = [], []
 
@@ -123,7 +129,8 @@ class Echo(torchvision.datasets.VisionDataset):
 
         else:
             # Load video-level labels
-            with open(os.path.join(self.root, "FileList.csv")) as f:
+            with open(os.path.join(self.measurement_location, "FileList.csv")) as f:
+                print("Loading video-level labels")
                 data = pandas.read_csv(f)
             data["Split"].map(lambda x: x.upper())
 
@@ -136,9 +143,9 @@ class Echo(torchvision.datasets.VisionDataset):
             self.outcome = data.values.tolist()
 
             # Check that files are present
-            missing = set(self.fnames) - set(os.listdir(os.path.join(self.root, "Videos")))
+            missing = set(self.fnames) - set(os.listdir(os.path.join(self.root)))
             if len(missing) != 0:
-                print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root, "Videos")))
+                print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root)))
                 for f in sorted(missing):
                     print("\t", f)
                 raise FileNotFoundError(os.path.join(self.root, "Videos", sorted(missing)[0]))
