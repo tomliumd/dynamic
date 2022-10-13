@@ -369,7 +369,7 @@ class EchoAge(torchvision.datasets.VisionDataset):
     """
 
     def __init__(self, root=None,
-                 split="train", target_type="EF",
+                 split="train", target_type="Age",
                  mean=0., std=1.,
                  length=16, period=2,
                  max_length=250,
@@ -378,7 +378,7 @@ class EchoAge(torchvision.datasets.VisionDataset):
                  noise=None,
                  target_transform=None,
                  external_test_location=None,
-                 external_test_values='/data/tom/MESA_Echos/weights/EF/FileList.csv',
+                 external_test_values='/data/tom/MESA_Echos/weights/Age/FileList.csv',
                  measurement_location=None):
         if root is None:
             root = echonet.config.DATA_DIR
