@@ -455,7 +455,7 @@ class EchoAge(torchvision.datasets.VisionDataset):
             self.outcome = data.values.tolist()
 
             # Check that files are present
-            missing = set(self.fnames) - set(os.listdir(os.path.join(self.root)))
+            missing = set(self.fnames) - set(os.path.join(self.root, x) for x in os.listdir(self.root))
             if len(missing) != 0:
                 print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root)))
                 for f in sorted(missing):
