@@ -448,7 +448,9 @@ class EchoAge(torchvision.datasets.VisionDataset):
 
             self.header = data.columns.tolist()
             self.fnames = data["FileName"].tolist()
-            self.fnames = [fn + ".avi" for fn in self.fnames if os.path.splitext(fn)[1] == ""]
+            self.fnames = [os.path.join(self.root, fn.split('/')[-1]) + ".avi" for fn in
+                               self.fnames if
+                               os.path.splitext(fn)[1] == ""]
             # Assume avi if no suffix
             self.outcome = data.values.tolist()
 
