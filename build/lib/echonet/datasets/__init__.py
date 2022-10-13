@@ -6,4 +6,4 @@ echocardiogram videos.
 from .echo import Echo
 from .echo import EchoAge
 
-__all__ = ("Echo", "Echo2")
+__all__ = ("Echo", "EchoAge")
