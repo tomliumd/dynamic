@@ -52,7 +52,7 @@ def loadvideo(filename: str) -> np.ndarray:
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         v[count, :, :] = frame
 
-    v = v.transpose((3, 0, 1, 2))
+    v = v.transpose((3, 0, 1, 2)) # why transpose?
 
     return v
 
