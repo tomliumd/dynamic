@@ -56,7 +56,7 @@ def save_preds(
     # Save raw predictions as .npy
     if npy:
         np.save(inf_path / (folder_name + '.npy'), preds)
-    pred_pts, pred_lens, sys_i, dia_i, angles = get_pred_measurements(preds)
+    pred_pts, pred_lens, sys_i, dia_i, angles = get_pred_measurements(preds, scale=1)
 
     # Save predicted points to .csv
     if csv:
