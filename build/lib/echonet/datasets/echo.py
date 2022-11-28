@@ -332,9 +332,6 @@ class EchoAge(torchvision.datasets.VisionDataset):
             Can also be a list to output a tuple with all specified target types.
             The targets represent:
                 ``Filename'' (string): filename of video
-                ``EF'' (float): ejection fraction
-                ``EDV'' (float): end-diastolic volume
-                ``ESV'' (float): end-systolic volume
                 ``LargeIndex'' (int): index of large (diastolic) frame in video
                 ``SmallIndex'' (int): index of small (systolic) frame in video
                 ``LargeFrame'' (np.array shape=(3, height, width)): normalized large (diastolic) frame
@@ -386,9 +383,7 @@ class EchoAge(torchvision.datasets.VisionDataset):
         super().__init__(root, target_transform=target_transform)
 
         self.split = split.upper()
-        if not isinstance(target_type, list):
-            target_type = [target_type]
-        self.target_type = target_type
+        self.target_type = [target_type] if not isinstance(target_type, list) else target_type
         self.mean = mean
         self.std = std
         self.length = length
@@ -398,19 +393,15 @@ class EchoAge(torchvision.datasets.VisionDataset):
         self.pad = pad
         self.noise = noise
         self.target_transform = target_transform
-        if self.split == "EXTERNAL_TEST":
-            self.external_test_location = root
-        else:
-            self.external_test_location = external_test_location
-
+        self.external_test_location = external_test_location if self.split == "EXTERNAL_TEST" else root
         self.external_test_values = external_test_values
-        if measurement_location is None:
-            self.measurement_location = root
-        self.measurement_location = measurement_location
+
+        #i.e. CSV file
+        self.measurement_location = measurement_location if measurement_location is not None else root
 
         self.fnames, self.outcome = [], []
 
-        if self.split == "EXTERNAL_TEST" or self.split == "external_test":
+        if self.split == "EXTERNAL_TEST":
             if self.external_test_values is not None:
                 with open(self.external_test_values) as f:
                     data = pandas.read_csv(f)
