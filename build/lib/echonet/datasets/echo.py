@@ -77,9 +77,7 @@ class Echo(torchvision.datasets.VisionDataset):
         super().__init__(root, target_transform=target_transform)
 
         self.split = split.upper()
-        if not isinstance(target_type, list):
-            target_type = [target_type]
-        self.target_type = target_type
+        self.target_type = target_type if isinstance(target_type, list) else [target_type]
         self.mean = mean
         self.std = std
         self.length = length
@@ -89,6 +87,7 @@ class Echo(torchvision.datasets.VisionDataset):
         self.pad = pad
         self.noise = noise
         self.target_transform = target_transform
+
         if self.split == "EXTERNAL_TEST":
             self.external_test_location = root
         else:
@@ -102,29 +101,29 @@ class Echo(torchvision.datasets.VisionDataset):
 
         self.fnames, self.outcome = [], []
 
-        if self.split == "EXTERNAL_TEST" or self.split == "external_test":
+        if self.split == "EXTERNAL_TEST":
             if self.external_test_values is not None:
                 with open(self.external_test_values) as f:
                     data = pandas.read_csv(f)
 
                 self.header = data.columns.tolist()
                 self.fnames = data["FileName"].tolist()
-                self.fnames = [os.path.join(self.external_test_location, '_'.join(fn.split('/')[-2:])) + ".avi" for fn in self.fnames if
+                self.fnames = [os.path.join(self.external_test_location, fn.split('/')[-1]) + ".avi" for fn in self.fnames if
                                os.path.splitext(fn)[1] == ""]  # Assume avi if no suffix
                 self.outcome = data.values.tolist()
 
-                missing = set(self.fnames) - set(os.path.join(self.external_test_location, x) for x in os.listdir(self.external_test_location))
+                missing = set(self.fnames) - set(os.path.join(self.external_test_location, path) for path in os.listdir(self.external_test_location))
                 if len(missing) != 0:
-                    print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root)))
+                    print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root, "Videos")))
                     for f in sorted(missing):
                         print("\t", f)
                     raise FileNotFoundError(os.path.join(self.external_test_location, sorted(missing)[0]))
 
-                keep = [f[1] != '.' for f in self.outcome]
+                keep = [val[1] != '.' for val in self.outcome]
                 self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
                 self.outcome = [f for (f, k) in zip(self.outcome, keep) if k]
             else:
-                print('no EF measurements are selected defaulting to prediction only')
+                print(f'no path to {target_type} is given defaulting to prediction only')
                 self.fnames = sorted(os.listdir(self.external_test_location))
 
         else:
@@ -132,61 +131,61 @@ class Echo(torchvision.datasets.VisionDataset):
             with open(os.path.join(self.measurement_location, "FileList.csv")) as f:
                 print("Loading video-level labels")
                 data = pandas.read_csv(f)
-            data["Split"].map(lambda x: x.upper())
+                data["Split"].map(lambda x: x.upper())
 
-            if self.split != "ALL":
-                data = data[data["Split"] == self.split]
+                if self.split != "ALL":
+                    data = data[data["Split"] == self.split]
 
-            self.header = data.columns.tolist()
-            self.fnames = data["FileName"].tolist()
-            self.fnames = [fn + ".avi" for fn in self.fnames if os.path.splitext(fn)[1] == ""]  # Assume avi if no suffix
-            self.outcome = data.values.tolist()
+                self.header = data.columns.tolist()
+                self.fnames = data["FileName"].tolist()
+                self.fnames = [fn + ".avi" for fn in self.fnames if os.path.splitext(fn)[1] == ""]  # Assume avi if no suffix
+                self.outcome = data.values.tolist()
 
-            # Check that files are present
-            missing = set(self.fnames) - set(os.listdir(os.path.join(self.root)))
-            if len(missing) != 0:
-                print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root)))
-                for f in sorted(missing):
-                    print("\t", f)
-                raise FileNotFoundError(os.path.join(self.root, "Videos", sorted(missing)[0]))
+                # Check that files are present
+                missing = set(self.fnames) - set(os.listdir(os.path.join(self.root)))
+                if len(missing) != 0:
+                    print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root)))
+                    for f in sorted(missing):
+                        print("\t", f)
+                    raise FileNotFoundError(os.path.join(self.root, "Videos", sorted(missing)[0]))
 
-            keep = [f[1] != '.' for f in self.outcome]
-            print('Removing ', pandas.Series(keep).value_counts())
-            self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
-            self.outcome = [f for (f, k) in zip(self.outcome, keep) if k]
-
-            # A small number of videos are missing traces; remove these videos
-            keep = [len(self.frames[f]) >= 2 for f in self.fnames]
-            self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
-            self.outcome = [f for (f, k) in zip(self.outcome, keep) if k]
-
-            # Load traces
-            self.frames = collections.defaultdict(list)
-            self.trace = collections.defaultdict(_defaultdict_of_lists)
-
-            if os.path.exists(os.path.join(self.root, "VolumeTracings.csv")):
-                with open(os.path.join(self.root, "VolumeTracings.csv")) as f:
-                    header = f.readline().strip().split(",")
-                    assert header == ["FileName", "X1", "Y1", "X2", "Y2", "Frame"]
-
-                    for line in f:
-                        filename, x1, y1, x2, y2, frame = line.strip().split(',')
-                        x1 = float(x1)
-                        y1 = float(y1)
-                        x2 = float(x2)
-                        y2 = float(y2)
-                        frame = int(frame)
-                        if frame not in self.trace[filename]:
-                            self.frames[filename].append(frame)
-                        self.trace[filename][frame].append((x1, y1, x2, y2))
-                for filename in self.frames:
-                    for frame in self.frames[filename]:
-                        self.trace[filename][frame] = np.array(self.trace[filename][frame])
+                keep = [val[1] != '.' for val in self.outcome]
+                print('Removing ', pandas.Series(keep).value_counts())
+                self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
+                self.outcome = [f for (f, k) in zip(self.outcome, keep) if k]
 
                 # A small number of videos are missing traces; remove these videos
                 keep = [len(self.frames[f]) >= 2 for f in self.fnames]
                 self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
                 self.outcome = [f for (f, k) in zip(self.outcome, keep) if k]
+
+                # Load traces
+                self.frames = collections.defaultdict(list)
+                self.trace = collections.defaultdict(_defaultdict_of_lists)
+
+                if os.path.exists(os.path.join(self.root, "VolumeTracings.csv")):
+                    with open(os.path.join(self.root, "VolumeTracings.csv")) as f:
+                        header = f.readline().strip().split(",")
+                        assert header == ["FileName", "X1", "Y1", "X2", "Y2", "Frame"]
+
+                        for line in f:
+                            filename, x1, y1, x2, y2, frame = line.strip().split(',')
+                            x1 = float(x1)
+                            y1 = float(y1)
+                            x2 = float(x2)
+                            y2 = float(y2)
+                            frame = int(frame)
+                            if frame not in self.trace[filename]:
+                                self.frames[filename].append(frame)
+                            self.trace[filename][frame].append((x1, y1, x2, y2))
+                    for filename in self.frames:
+                        for frame in self.frames[filename]:
+                            self.trace[filename][frame] = np.array(self.trace[filename][frame])
+
+                    # A small number of videos are missing traces; remove these videos
+                    keep = [len(self.frames[f]) >= 2 for f in self.fnames]
+                    self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
+                    self.outcome = [f for (f, k) in zip(self.outcome, keep) if k]
 
     def __getitem__(self, index):
         # Find filename of video
@@ -332,6 +331,9 @@ class EchoAge(torchvision.datasets.VisionDataset):
             Can also be a list to output a tuple with all specified target types.
             The targets represent:
                 ``Filename'' (string): filename of video
+                ``EF'' (float): ejection fraction
+                ``EDV'' (float): end-diastolic volume
+                ``ESV'' (float): end-systolic volume
                 ``LargeIndex'' (int): index of large (diastolic) frame in video
                 ``SmallIndex'' (int): index of small (systolic) frame in video
                 ``LargeFrame'' (np.array shape=(3, height, width)): normalized large (diastolic) frame
@@ -377,19 +379,23 @@ class EchoAge(torchvision.datasets.VisionDataset):
                  external_test_location=None,
                  external_test_values='/data/tom/MESA_Echos/weights/Age/FileList.csv',
                  measurement_location=None):
+
         if root is None:
             root = echonet.config.DATA_DIR
 
         super().__init__(root, target_transform=target_transform)
 
         self.split = split.upper()
-        self.target_type = [target_type] if not isinstance(target_type, list) else target_type
+        self.target_type = target_type if isinstance(target_type, list) else [target_type]
+
         self.mean = mean
         self.std = std
+
         self.length = length
         self.max_length = max_length
         self.period = period
         self.clips = clips
+
         self.pad = pad
         self.noise = noise
         self.target_transform = target_transform
@@ -442,12 +448,14 @@ class EchoAge(torchvision.datasets.VisionDataset):
 
             self.header = data.columns.tolist()
             self.fnames = data["FileName"].tolist()
-            self.fnames = [fn + ".avi" for fn in self.fnames if
-                           os.path.splitext(fn)[1] == ""]  # Assume avi if no suffix
+            self.fnames = [os.path.join(self.root, '_'.join(fn.split('/')[-2:])) + ".avi" for fn in
+                               self.fnames if
+                               os.path.splitext(fn)[1] == ""]
+            # Assume avi if no suffix
             self.outcome = data.values.tolist()
 
             # Check that files are present
-            missing = set(self.fnames) - set(os.listdir(os.path.join(self.root)))
+            missing = set(self.fnames) - set(os.path.join(self.root, x) for x in os.listdir(self.root))
             if len(missing) != 0:
                 print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root)))
                 for f in sorted(missing):

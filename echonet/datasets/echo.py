@@ -399,20 +399,15 @@ class EchoAge(torchvision.datasets.VisionDataset):
         self.pad = pad
         self.noise = noise
         self.target_transform = target_transform
-
-        if self.split == "EXTERNAL_TEST":
-            self.external_test_location = root
-        else:
-            self.external_test_location = external_test_location
-
+        self.external_test_location = external_test_location if self.split == "EXTERNAL_TEST" else root
         self.external_test_values = external_test_values
-        if measurement_location is None:
-            self.measurement_location = root
-        self.measurement_location = measurement_location
+
+        #i.e. CSV file
+        self.measurement_location = measurement_location if measurement_location is not None else root
 
         self.fnames, self.outcome = [], []
 
-        if self.split == "EXTERNAL_TEST" or self.split == "external_test":
+        if self.split == "EXTERNAL_TEST":
             if self.external_test_values is not None:
                 with open(self.external_test_values) as f:
                     data = pandas.read_csv(f)
@@ -453,7 +448,7 @@ class EchoAge(torchvision.datasets.VisionDataset):
 
             self.header = data.columns.tolist()
             self.fnames = data["FileName"].tolist()
-            self.fnames = [os.path.join(self.root, fn.split('/')[-1]) + ".avi" for fn in
+            self.fnames = [os.path.join(self.root, '_'.join(fn.split('/')[-2:])) + ".avi" for fn in
                                self.fnames if
                                os.path.splitext(fn)[1] == ""]
             # Assume avi if no suffix
