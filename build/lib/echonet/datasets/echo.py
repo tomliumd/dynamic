@@ -109,13 +109,13 @@ class Echo(torchvision.datasets.VisionDataset):
 
                 self.header = data.columns.tolist()
                 self.fnames = data["FileName"].tolist()
-                self.fnames = [os.path.join(self.external_test_location, fn.split('/')[-1]) + ".avi" for fn in self.fnames if
+                self.fnames = [os.path.join(self.external_test_location, '_'.join(fn.split('/')[-2:])) + ".avi" for fn in self.fnames if
                                os.path.splitext(fn)[1] == ""]  # Assume avi if no suffix
                 self.outcome = data.values.tolist()
 
                 missing = set(self.fnames) - set(os.path.join(self.external_test_location, x) for x in os.listdir(self.external_test_location))
                 if len(missing) != 0:
-                    print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root, "Videos")))
+                    print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root)))
                     for f in sorted(missing):
                         print("\t", f)
                     raise FileNotFoundError(os.path.join(self.external_test_location, sorted(missing)[0]))
