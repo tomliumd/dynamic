@@ -430,7 +430,10 @@ class EchoAge(torchvision.datasets.VisionDataset):
                     print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root)))
                     for f in sorted(missing):
                         print("\t", f)
-                    raise FileNotFoundError(os.path.join(self.external_test_location, sorted(missing)[0]))
+                        idx = self.fnames.index(f)
+                        print('deleting {} | index {}'.format(f, idx))
+                        del self.fnames[idx]; del self.outcome[idx]
+                    # raise FileNotFoundError(os.path.join(self.external_test_location, sorted(missing)[0]))
 
                 keep = [f[1] != '.' for f in self.outcome]
                 self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
