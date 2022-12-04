@@ -118,10 +118,7 @@ class Echo(torchvision.datasets.VisionDataset):
                     print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root)))
                     for f in sorted(missing):
                         print("\t", f)
-                        idx = self.fnames.index(f)
-                        print('deleting {} | index {}'.format(f, idx))
-                        del self.fnames[idx]; del self.outcome[idx]
-                    # raise FileNotFoundError(os.path.join(self.external_test_location, sorted(missing)[0]))
+                    raise FileNotFoundError(os.path.join(self.external_test_location, sorted(missing)[0]))
 
                 keep = [f[1] != '.' for f in self.outcome]
                 self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
@@ -411,7 +408,7 @@ class EchoAge(torchvision.datasets.VisionDataset):
 
                 self.header = data.columns.tolist()
                 self.fnames = data["FileName"].tolist()
-                self.fnames = [os.path.join(self.external_test_location, fn.split('/')[-1]) + ".avi" for fn in
+                self.fnames = [os.path.join(self.external_test_location, '_'.join(fn.split('/')[-2:])) + ".avi" for fn in
                                self.fnames if
                                os.path.splitext(fn)[1] == ""]  # Assume avi if no suffix
                 self.outcome = data.values.tolist()
@@ -419,10 +416,13 @@ class EchoAge(torchvision.datasets.VisionDataset):
                 missing = set(self.fnames) - set(
                     os.path.join(self.external_test_location, x) for x in os.listdir(self.external_test_location))
                 if len(missing) != 0:
-                    print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root, "Videos")))
+                    print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root)))
                     for f in sorted(missing):
                         print("\t", f)
-                    raise FileNotFoundError(os.path.join(self.external_test_location, sorted(missing)[0]))
+                        idx = self.fnames.index(f)
+                        print('deleting {} | index {}'.format(f, idx))
+                        del self.fnames[idx]; del self.outcome[idx]
+                    # raise FileNotFoundError(os.path.join(self.external_test_location, sorted(missing)[0]))
 
                 keep = [f[1] != '.' for f in self.outcome]
                 self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
