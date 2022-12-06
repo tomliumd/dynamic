@@ -3,7 +3,7 @@ from operator import index, mod
 from pandas.core.algorithms import isin
 import torch
 from models import AgeModel as Model
-from tqdm import tqdm
+import tqdm
 from pathlib import Path
 from utils import BoolAction, read_clip, model_paths
 import numpy as np
@@ -74,7 +74,7 @@ class A4cClassificationInferenceEngine:
         # Yield batches of videos from directory
         def batch_gen():
             batch = ([], [])
-            for p in tqdm(list(in_dir.iterdir())) if verbose else in_dir.iterdir():
+            for p in tqdm.tqdm(list(in_dir.iterdir())) if verbose else in_dir.iterdir():
                 if '.avi' not in p.name:
                     continue
                 clip = read_clip(p, res=self.res, max_len=clip_length)

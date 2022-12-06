@@ -8,11 +8,11 @@ import cv2
 import numpy as np
 import pandas as pd
 import cv2
+import tqdm
 from matplotlib import pyplot as plt
 from matplotlib import animation
 import torch
 from pathlib import Path
-from tqdm import tqdm
 from scipy.signal import find_peaks
 import shutil
 import sys
@@ -284,7 +284,7 @@ class PlaxHypertrophyInferenceEngine:
         
         # Wait for remaining threads to finish
         p('Waiting for threads to finish')
-        for t in tqdm(threads) if verbose else threads:
+        for t in tqdm.tqdm(threads) if verbose else threads:
             t.join()
         p('Finished')
 
@@ -305,7 +305,7 @@ class PlaxHypertrophyInferenceEngine:
         # Run
         clips = dict()  # clips currently being processed
         batch = np.zeros((batch_size, h, w, channels_in))
-        for si in tqdm(range(0, len(frame_map), batch_size)) if verbose else range(0, len(frame_map), batch_size):
+        for si in tqdm.tqdm(range(0, len(frame_map), batch_size)) if verbose else range(0, len(frame_map), batch_size):
             
             # Get batch files
             batch_map = frame_map.iloc[si:min(si + batch_size, len(frame_map))]
