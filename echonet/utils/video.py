@@ -375,8 +375,11 @@ def run_epoch(model, dataloader, train, optim, device, save_all=False, block_siz
 
     with torch.set_grad_enabled(train):
         with tqdm.tqdm(total=len(dataloader)) as pbar:
-            for (i, (X, outcome)) in enumerate(dataloader):
-
+            for (i, (X, outcome, file_path)) in enumerate(dataloader):
+                pbar.set_postfix_str(
+                    "{:.2f} ({:.2f}) / {:.2f} | Path: {}".format(total / n, loss.item(), s2 / n - (s1 / n) ** 2,
+                                                                 file_path))
+                
                 y.append(outcome.numpy())
                 X = X.to(device)
                 outcome = outcome.to(device)
@@ -413,7 +416,6 @@ def run_epoch(model, dataloader, train, optim, device, save_all=False, block_siz
                 total += loss.item() * X.size(0)
                 n += X.size(0)
 
-                pbar.set_postfix_str("{:.2f} ({:.2f}) / {:.2f}".format(total / n, loss.item(), s2 / n - (s1 / n) ** 2))
                 pbar.update()
 
     if not save_all:
