@@ -590,7 +590,7 @@ class EchoAge(torchvision.datasets.VisionDataset):
             i, j = np.random.randint(0, 2 * self.pad, 2)
             video = temp[:, :, i:(i + h), j:(j + w)]
 
-        return video, target
+        return video, target, self.fnames[index]
 
     def __len__(self):
         return len(self.fnames)
