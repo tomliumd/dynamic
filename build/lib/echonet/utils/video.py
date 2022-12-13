@@ -376,9 +376,8 @@ def run_epoch(model, dataloader, train, optim, device, save_all=False, block_siz
     with torch.set_grad_enabled(train):
         with tqdm.tqdm(total=len(dataloader)) as pbar:
             for (i, (X, outcome)) in enumerate(dataloader):
-                pbar.set_postfix_str(
-                    "{:.2f} ({:.2f}) / {:.2f} | Path: {}".format(total / n, loss.item(), s2 / n - (s1 / n) ** 2,
-                                                                 file_path))
+                pbar.set_postfix_str(f"Path: {file_path}")
+                pbar.update()
 
                 y.append(outcome.numpy())
                 X = X.to(device)
