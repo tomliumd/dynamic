@@ -466,7 +466,7 @@ class EchoAge(torchvision.datasets.VisionDataset):
             print('Removing ', pandas.Series(keep).value_counts())
             self.fnames = [f for (f, k) in zip(self.fnames, keep) if k]
             self.outcome = [f for (f, k) in zip(self.outcome, keep) if k]
-        print(len(self.names), self.names)
+        print(len(self.fnames), self.fnames)
 
     def __getitem__(self, index):
         # Find filename of video
