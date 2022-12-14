@@ -377,7 +377,9 @@ def run_epoch(model, dataloader, train, optim, device, save_all=False, block_siz
         print(len(dataloader))
         with tqdm.tqdm(total=len(dataloader)) as pbar:
             for (i, (X, outcome, file_path)) in enumerate(dataloader):
-                pbar.set_postfix_str(f"iter#: {i} | Path: {file_path}")
+                n += 1
+                pbar.set_postfix_str("iter# {} | path: {} | {:.2f} ({:.2f}) / {:.2f}".format(i, file_path, total / n, loss.item(), s2 / n - (s1 / n) ** 2))
+                n -= 1
                 pbar.update()
 
                 y.append(outcome.numpy())
@@ -417,6 +419,9 @@ def run_epoch(model, dataloader, train, optim, device, save_all=False, block_siz
                 n += X.size(0)
 
                 # pbar.update()
+                if i > len(dataloader)+100:
+                    print('why is this loop not ending')
+                    break
 
     if not save_all:
         yhat = np.concatenate(yhat)
