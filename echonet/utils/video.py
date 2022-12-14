@@ -415,7 +415,7 @@ def run_epoch(model, dataloader, train, optim, device, save_all=False, block_siz
                 total += loss.item() * X.size(0)
                 n += X.size(0)
 
-                pbar.update()
+                # pbar.update()
 
     if not save_all:
         yhat = np.concatenate(yhat)
