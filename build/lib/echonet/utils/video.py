@@ -327,20 +327,6 @@ def run(
                 plt.savefig(os.path.join(output, "{}_scatter.pdf".format(split)))
                 plt.close(fig)
 
-                print('Plot AUROC')
-                fig = plt.figure(figsize=(3, 3))
-                plt.plot([0, 1], [0, 1], linewidth=1, color="k", linestyle="--")
-                for thresh in [35, 40, 45, 50]:
-                    fpr, tpr, _ = sklearn.metrics.roc_curve(y > thresh, yhat)
-                    print(thresh, sklearn.metrics.roc_auc_score(y > thresh, yhat))
-                    plt.plot(fpr, tpr)
-
-                plt.axis([-0.01, 1.01, -0.01, 1.01])
-                plt.xlabel("False Positive Rate")
-                plt.ylabel("True Positive Rate")
-                plt.tight_layout()
-                plt.savefig(os.path.join(output, "{}_roc.pdf".format(split)))
-                plt.close(fig)
 
 
 
