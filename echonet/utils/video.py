@@ -378,7 +378,8 @@ def run_epoch(model, dataloader, train, optim, device, save_all=False, block_siz
         with tqdm.tqdm(total=len(dataloader)) as pbar:
             for (i, (X, outcome, file_path)) in enumerate(dataloader):
                 n += 1
-                pbar.set_postfix_str("iter# {} | path: {} | {:.2f} ({:.2f}) / {:.2f}".format(i, file_path, total / n, loss.item(), s2 / n - (s1 / n) ** 2))
+                loss = 0
+                pbar.set_postfix_str("iter# {} | path: {}".format(i, file_path))
                 n -= 1
                 pbar.update()
 
