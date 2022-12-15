@@ -419,9 +419,9 @@ def run_epoch(model, dataloader, train, optim, device, save_all=False, block_siz
                 n += X.size(0)
 
                 # pbar.update()
-                if i > len(dataloader)+100:
-                    print('why is this loop not ending')
-                    break
+                    # if i > len(dataloader)+100:
+                    #     print('why is this loop not ending')
+                    #     break
 
     if not save_all:
         yhat = np.concatenate(yhat)
