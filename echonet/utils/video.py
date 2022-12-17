@@ -293,6 +293,8 @@ def run(
                 f.write("{} (one clip) RMSE: {:.2f} ({:.2f} - {:.2f})\n".format(split, *tuple(map(math.sqrt, echonet.utils.bootstrap(y, yhat, sklearn.metrics.mean_squared_error)))))
                 f.flush()
 
+                torch.cuda.empty_cache()
+
                 print('Performance with test-time augmentation')
                 ds = echonet.datasets.Echo(root=data_dir, split=split, **kwargs, clips="all")
                 dataloader = torch.utils.data.DataLoader(
