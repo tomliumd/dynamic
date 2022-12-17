@@ -89,9 +89,9 @@ class Echo(torchvision.datasets.VisionDataset):
         self.target_transform = target_transform
 
         if self.split == "EXTERNAL_TEST":
-            self.external_test_location = root
-        else:
             self.external_test_location = external_test_location
+        else:
+            self.external_test_location = root
 
         self.external_test_values = external_test_values
 
@@ -112,9 +112,10 @@ class Echo(torchvision.datasets.VisionDataset):
                                os.path.splitext(fn)[1] == ""]  # Assume avi if no suffix
                 self.outcome = data.values.tolist()
 
+
                 missing = set(self.fnames) - set(os.path.join(self.external_test_location, path) for path in os.listdir(self.external_test_location))
                 if len(missing) != 0:
-                    print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root, "Videos")))
+                    print("{} videos could not be found in {}:".format(len(missing), os.path.join(self.root)))
                     for f in sorted(missing):
                         print("\t", f)
                     raise FileNotFoundError(os.path.join(self.external_test_location, sorted(missing)[0]))

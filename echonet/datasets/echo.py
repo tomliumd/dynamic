@@ -89,9 +89,9 @@ class Echo(torchvision.datasets.VisionDataset):
         self.target_transform = target_transform
 
         if self.split == "EXTERNAL_TEST":
-            self.external_test_location = root
-        else:
             self.external_test_location = external_test_location
+        else:
+            self.external_test_location = root
 
         self.external_test_values = external_test_values
 
