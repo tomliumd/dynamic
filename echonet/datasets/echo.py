@@ -71,6 +71,7 @@ class Echo(torchvision.datasets.VisionDataset):
                  external_test_location=None,
                  external_test_values='/data/tom/MESA_Echos/weights/EF/FileList.csv',
                  measurement_location=None):
+
         if root is None:
             root = echonet.config.DATA_DIR
 
@@ -78,15 +79,24 @@ class Echo(torchvision.datasets.VisionDataset):
 
         self.split = split.upper()
         self.target_type = target_type if isinstance(target_type, list) else [target_type]
+
         self.mean = mean
         self.std = std
+
         self.length = length
         self.max_length = max_length
         self.period = period
         self.clips = clips
+
         self.pad = pad
         self.noise = noise
         self.target_transform = target_transform
+        self.external_test_location = external_test_location if self.split == "EXTERNAL_TEST" else root
+        self.external_test_values = external_test_values
+
+        #i.e. CSV file
+        self.measurement_location = measurement_location if measurement_location is not None else root
+
 
         if self.split == "EXTERNAL_TEST":
             self.external_test_location = external_test_location
@@ -310,7 +320,7 @@ class Echo(torchvision.datasets.VisionDataset):
             video = temp[:, :, i:(i + h), j:(j + w)]
 
         return video, target, self.fnames[index]
-    
+
     def __len__(self):
         return len(self.fnames)
 

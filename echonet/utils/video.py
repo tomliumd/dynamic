@@ -108,6 +108,8 @@ def run(
         seed (int, optional): Seed for random number generator. Defaults to 0.
     """
 
+    ext_test_dir = data_dir if cohort_split == 'external_test' else None
+
     # Seed RNGs
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -143,7 +145,7 @@ def run(
     scheduler = torch.optim.lr_scheduler.StepLR(optim, lr_step_period)
 
     # Compute mean and std
-    mean, std = echonet.utils.get_mean_and_std(echonet.datasets.Echo(root=data_dir, split=cohort_split))
+    mean, std = echonet.utils.get_mean_and_std(echonet.datasets.Echo(root=data_dir, split=cohort_split, external_test_location=ext_test_dir))
     kwargs = {"target_type": task,
               "mean": mean,
               "std": std,
