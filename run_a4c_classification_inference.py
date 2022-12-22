@@ -5,7 +5,7 @@ import torch
 from models import AgeModel as Model
 import tqdm
 from pathlib import Path
-from utils import BoolAction, read_clip, model_paths
+from .utils import BoolAction, read_clip, model_paths
 import numpy as np
 import pandas as pd
 from typing import Union
