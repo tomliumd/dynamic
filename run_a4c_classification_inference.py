@@ -2,13 +2,15 @@ from argparse import ArgumentParser
 from operator import index, mod
 from pandas.core.algorithms import isin
 import torch
-from models import ClassificationModel as Model
+
 import tqdm
 from pathlib import Path
-from .utils import BoolAction, read_clip, model_paths
 import numpy as np
 import pandas as pd
 from typing import Union
+
+from .models import ClassificationModel as Model
+from .utils import BoolAction, read_clip, model_paths
 
 
 class A4cClassificationInferenceEngine:

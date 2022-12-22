@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 from operator import index, mod
 from pandas.core.algorithms import isin
 import torch
-from models import ClassificationModel as Model
+from models import AgeModel as Model
 from tqdm import tqdm
 from pathlib import Path
 from utils import BoolAction, read_clip, model_paths
